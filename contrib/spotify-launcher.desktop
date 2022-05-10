@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Spotify
+Name=Spotify (Launcher)
 GenericName=Music Player
-Icon=spotify-client
+Icon=spotify-launcher
 TryExec=spotify-launcher
 Exec=spotify-launcher --uri %U
 Terminal=false
