@@ -3,7 +3,7 @@
 pkgname=spotify-launcher
 pkgver=0.0.0
 pkgrel=1
-pkgdesc='TODO'
+pkgdesc="Client for spotify's apt repository in Rust for Arch Linux"
 url='https://github.com/kpcyrd/spotify-launcher'
 arch=('x86_64')
 license=('MIT' 'Apache')
