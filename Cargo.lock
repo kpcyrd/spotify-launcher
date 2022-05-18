@@ -992,6 +992,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "ar",
+ "bytes",
  "clap",
  "dirs",
  "env_logger",

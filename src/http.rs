@@ -1,4 +1,5 @@
 use crate::errors::*;
+use bytes::Bytes;
 use std::time::Duration;
 
 pub struct Client {
@@ -35,5 +36,46 @@ impl Client {
         let body = resp.bytes().await.context("Failed to read http response")?;
         debug!("Downloaded {} bytes", body.len());
         Ok(body.to_vec())
+    }
+
+    pub async fn fetch_stream(&self, url: &str) -> Result<Download> {
+        debug!("Downloading {:?}...", url);
+        let resp = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .context("Failed to send http request")?;
+
+        let status = resp.status();
+        if !status.is_success() {
+            bail!("Unexpected http status code: {:?}", status);
+        }
+
+        let total = resp.content_length().unwrap_or(0);
+
+        Ok(Download {
+            resp,
+            progress: 0,
+            total,
+        })
+    }
+}
+
+pub struct Download {
+    resp: reqwest::Response,
+    pub progress: u64,
+    pub total: u64,
+}
+
+impl Download {
+    pub async fn chunk(&mut self) -> Result<Option<Bytes>> {
+        let bytes = self.resp.chunk().await?;
+        if let Some(bytes) = bytes {
+            self.progress += bytes.len() as u64;
+            Ok(Some(bytes))
+        } else {
+            Ok(None)
+        }
     }
 }
