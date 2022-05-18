@@ -7,7 +7,7 @@ pkgdesc="Client for spotify's apt repository in Rust for Arch Linux"
 url='https://github.com/kpcyrd/spotify-launcher'
 arch=('x86_64')
 license=('MIT' 'Apache')
-depends=('sequoia-sqv' 'alsa-lib>=1.0.14' 'gtk3' 'libxss' 'desktop-file-utils' 'openssl' 'nss' 'at-spi2-atk' 'libcurl-gnutls' 'libsm')
+depends=('sequoia-sqv' 'zenity' 'alsa-lib>=1.0.14' 'gtk3' 'libxss' 'desktop-file-utils' 'openssl' 'nss' 'at-spi2-atk' 'libcurl-gnutls' 'libsm')
 makedepends=('cargo')
 
 build() {

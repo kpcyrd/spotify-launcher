@@ -3,6 +3,7 @@ use crate::deb::{self, Pkg};
 use crate::errors::*;
 use crate::http;
 use crate::pgp;
+use crate::progress::ProgressBar;
 use std::fs;
 use std::path::Path;
 
@@ -85,8 +86,23 @@ impl Client {
             filename, pkg.package, pkg.version
         );
         let url = format!("http://repository.spotify.com/{}", pkg.filename);
-        let deb = self.client.fetch(&url).await?;
 
+        // download
+        let mut pb = ProgressBar::spawn()?;
+        let mut dl = self.client.fetch_stream(&url).await?;
+        let mut deb = Vec::new();
+        while let Some(chunk) = dl.chunk().await? {
+            deb.extend(&chunk);
+            let progress = (dl.progress as f64 / dl.total as f64 * 100.0) as u64;
+            pb.update(progress).await?;
+            debug!(
+                "Download progress: {}%, {}/{}",
+                progress, dl.progress, dl.total
+            );
+        }
+        pb.close().await?;
+
+        // verify checksum
         info!("Verifying with sha256sum hash...");
         let downloaded_sha256sum = crypto::sha256sum(&deb);
         if pkg.sha256sum != downloaded_sha256sum {
