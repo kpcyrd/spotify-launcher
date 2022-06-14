@@ -51,6 +51,12 @@ async fn main() -> Result<()> {
         false
     } else if let Some(state) = &state {
         let since_update = SystemTime::now().duration_since(state.last_update_check)?;
+
+        let hours_since = since_update.as_secs() / 3600;
+        let days_since = hours_since / 24;
+        let hours_since = hours_since % 24;
+
+        debug!("Last update check was {} days and {} hours ago", days_since, hours_since);
         since_update >= Duration::from_secs(UPDATE_CHECK_INTERVAL)
     } else {
         true
