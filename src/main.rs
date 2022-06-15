@@ -32,6 +32,11 @@ fn extract_tar(mut deb: &[u8]) -> Result<Vec<u8>> {
     bail!("Failed to find data entry in .deb");
 }
 
+struct VersionCheck {
+    deb: Option<Vec<u8>>,
+    version: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -51,6 +56,12 @@ async fn main() -> Result<()> {
         false
     } else if let Some(state) = &state {
         let since_update = SystemTime::now().duration_since(state.last_update_check)?;
+
+        let hours_since = since_update.as_secs() / 3600;
+        let days_since = hours_since / 24;
+        let hours_since = hours_since % 24;
+
+        debug!("Last update check was {} days and {} hours ago", days_since, hours_since);
         since_update >= Duration::from_secs(UPDATE_CHECK_INTERVAL)
     } else {
         true
@@ -66,7 +77,10 @@ async fn main() -> Result<()> {
         let update = if let Some(deb_path) = args.deb {
             let deb = fs::read(&deb_path)
                 .with_context(|| anyhow!("Failed to read .deb file from {:?}", deb_path))?;
-            Some((deb, "0".to_string()))
+            VersionCheck {
+                deb: Some(deb),
+                version: "0".to_string(),
+            }
         } else {
             let client = Client::new()?;
             let pkg = client.fetch_pkg_release(&args.keyring).await?;
@@ -74,13 +88,22 @@ async fn main() -> Result<()> {
             match state {
                 Some(state) if state.version == pkg.version && !args.force_update => {
                     info!("Latest version is already installed, not updating");
-                    None
+                    VersionCheck {
+                        deb: None,
+                        version: pkg.version,
+                    }
                 }
-                _ => Some((client.download_pkg(&pkg).await?, pkg.version)),
+                _ => {
+                    let deb = client.download_pkg(&pkg).await?;
+                    VersionCheck {
+                        deb: Some(deb),
+                        version: pkg.version,
+                    }
+                }
             }
         };
 
-        if let Some((deb, version)) = update {
+        if let Some(deb) = update.deb {
             let tar = extract_tar(&deb).context("Failed to process .deb file")?;
 
             let mut tar = &tar[..];
@@ -111,14 +134,14 @@ async fn main() -> Result<()> {
                     warn!("Failed to delete old directory: {:?}", err);
                 }
             }
-
-            debug!("Updating state file");
-            let buf = serde_json::to_string(&paths::State {
-                last_update_check: SystemTime::now(),
-                version,
-            })?;
-            fs::write(&paths::state_file_path()?, buf).context("Failed to write state file")?;
         }
+
+        debug!("Updating state file");
+        let buf = serde_json::to_string(&paths::State {
+            last_update_check: SystemTime::now(),
+            version: update.version,
+        })?;
+        fs::write(&paths::state_file_path()?, buf).context("Failed to write state file")?;
     } else {
         info!("No update needed");
     }
