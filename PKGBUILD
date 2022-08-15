@@ -9,6 +9,7 @@ arch=('x86_64')
 license=('MIT' 'Apache')
 depends=('sequoia-sqv' 'zenity' 'alsa-lib>=1.0.14' 'gtk3' 'libxss' 'desktop-file-utils' 'openssl' 'nss' 'at-spi2-atk' 'libcurl-gnutls' 'libsm')
 makedepends=('cargo')
+backup=('etc/spotify-launcher.conf')
 
 build() {
   cd ..
@@ -24,6 +25,7 @@ package() {
 
   install -Dm644 contrib/spotify-launcher.desktop -t "${pkgdir}/usr/share/applications"
   install -Dm644 contrib/icons/spotify-linux-512.png "${pkgdir}/usr/share/pixmaps/spotify-launcher.png"
+  install -Dm644 contrib/spotify-launcher.conf -t "${pkgdir}/etc"
 
   for size in 22 24 32 48 64 128 256 512; do
     install -Dm644 "contrib/icons/spotify-linux-${size}.png" \

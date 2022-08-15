@@ -1,5 +1,6 @@
 pub mod apt;
 pub mod args;
+pub mod config;
 pub mod crypto;
 pub mod deb;
 pub mod errors;

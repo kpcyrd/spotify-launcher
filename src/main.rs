@@ -3,11 +3,13 @@ use env_logger::Env;
 use libflate::gzip::Decoder;
 use spotify_launcher::apt::Client;
 use spotify_launcher::args::Args;
+use spotify_launcher::config::ConfigFile;
 use spotify_launcher::errors::*;
 use spotify_launcher::paths;
 use std::ffi::CString;
 use std::fs;
 use std::io::Read;
+use std::path::Path;
 use std::time::Duration;
 use std::time::SystemTime;
 
@@ -37,18 +39,7 @@ struct VersionCheck {
     version: String,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let args = Args::parse();
-
-    let log_level = match args.verbose {
-        0 => "info",
-        1 => "info,spotify_launcher=debug",
-        2 => "debug",
-        _ => "trace",
-    };
-    env_logger::init_from_env(Env::default().default_filter_or(log_level));
-
+async fn update(args: &Args, install_path: &Path) -> Result<()> {
     let state = paths::load_state_file()?;
     let should_update = if args.force_update || args.check_update {
         true
@@ -61,20 +52,17 @@ async fn main() -> Result<()> {
         let days_since = hours_since / 24;
         let hours_since = hours_since % 24;
 
-        debug!("Last update check was {} days and {} hours ago", days_since, hours_since);
+        debug!(
+            "Last update check was {} days and {} hours ago",
+            days_since, hours_since
+        );
         since_update >= Duration::from_secs(UPDATE_CHECK_INTERVAL)
     } else {
         true
     };
 
-    let install_path = if let Some(path) = &args.install_dir {
-        path.clone()
-    } else {
-        paths::install_path()?
-    };
-
     if should_update {
-        let update = if let Some(deb_path) = args.deb {
+        let update = if let Some(deb_path) = &args.deb {
             let deb = fs::read(&deb_path)
                 .with_context(|| anyhow!("Failed to read .deb file from {:?}", deb_path))?;
             VersionCheck {
@@ -109,7 +97,7 @@ async fn main() -> Result<()> {
             let mut tar = &tar[..];
             let mut tar = tar::Archive::new(&mut tar);
 
-            let new_install_path = if let Some(path) = args.install_dir {
+            let new_install_path = if let Some(path) = args.install_dir.clone() {
                 path
             } else {
                 paths::new_install_path()?
@@ -145,20 +133,58 @@ async fn main() -> Result<()> {
     } else {
         info!("No update needed");
     }
+    Ok(())
+}
+
+fn start(args: &Args, cf: &ConfigFile, install_path: &Path) -> Result<()> {
+    let bin = install_path.join("usr/bin/spotify");
+    let bin = CString::new(bin.to_string_lossy().as_bytes())?;
+
+    let mut exec_args = vec![CString::new("spotify")?];
+
+    for arg in cf.spotify.extra_arguments.iter().cloned() {
+        exec_args.push(CString::new(arg)?);
+    }
+
+    if let Some(uri) = &args.uri {
+        exec_args.push(CString::new(format!("--uri={}", uri))?);
+    }
+
+    debug!("Assembled command: {:?}", exec_args);
 
     if args.no_exec {
         info!("Skipping exec because --no-exec was used");
     } else {
-        let bin = install_path.join("usr/bin/spotify");
-        let bin = CString::new(bin.to_string_lossy().as_bytes())?;
-
-        let mut exec_args = vec![CString::new("spotify")?];
-        if let Some(uri) = args.uri {
-            exec_args.push(CString::new(format!("--uri={}", uri))?);
-        }
         nix::unistd::execv(&bin, &exec_args)
             .with_context(|| anyhow!("Failed to exec {:?}", bin))?;
     }
+
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let args = Args::parse();
+
+    let log_level = match args.verbose {
+        0 => "info",
+        1 => "info,spotify_launcher=debug",
+        2 => "debug",
+        _ => "trace",
+    };
+    env_logger::init_from_env(Env::default().default_filter_or(log_level));
+
+    let cf = ConfigFile::load().context("Failed to load configuration")?;
+
+    let install_path = if let Some(path) = &args.install_dir {
+        path.clone()
+    } else {
+        paths::install_path()?
+    };
+    debug!("Using install path: {:?}", install_path);
+
+    update(&args, &install_path).await?;
+    start(&args, &cf, &install_path)?;
 
     Ok(())
 }
