@@ -188,7 +188,7 @@ SHA256:
     fn test_parse_package_index() -> Result<()> {
         let data = r#"Package: spotify-client
 Architecture: amd64
-Version: 1:1.1.84.716.gc5f8b819
+Version: 1:1.1.84.716.gc5f8b819-2
 Priority: extra
 Section: sound
 Maintainer: Spotify <tux@spotify.com>
@@ -196,7 +196,7 @@ Installed-Size: 291694
 Depends: libasound2, libatk-bridge2.0-0, libatomic1, libcurl3-gnutls, libgbm1, libgconf-2-4, libglib2.0-0, libgtk-3-0, libnss3, libssl3 | libssl1.1 | libssl1.0.2 | libssl1.0.1 | libssl1.0.0, libxshmfence1, libxss1, libxtst6, xdg-utils
 Recommends: libavcodec58 | libavcodec-extra58 | libavcodec57 | libavcodec-extra57 | libavcodec-ffmpeg56 | libavcodec-ffmpeg-extra56 | libavcodec54 | libavcodec-extra-54, libavformat58 | libavformat57 | libavformat-ffmpeg56 | libavformat54
 Suggests: libnotify4
-Filename: pool/non-free/s/spotify-client/spotify-client_1.1.84.716.gc5f8b819_amd64.deb
+Filename: pool/non-free/s/spotify-client/spotify-client_1.1.84.716.gc5f8b819-2_amd64.deb
 SHA512: 3cc25f28ae791ac26607117a5df668f803ed8e58f0ace085010a6242fdde97766bdc1c752560850795c9b4324f3e019937fe9af2788a1946ebb70ee781f50d99
 Homepage: https://www.spotify.com
 Size: 119770140
@@ -212,9 +212,9 @@ Vendor: Spotify AB
             parsed,
             &[Pkg {
                 package: "spotify-client".into(),
-                version: "1:1.1.84.716.gc5f8b819".into(),
+                version: "1:1.1.84.716.gc5f8b819-2".into(),
                 filename:
-                    "pool/non-free/s/spotify-client/spotify-client_1.1.84.716.gc5f8b819_amd64.deb"
+                    "pool/non-free/s/spotify-client/spotify-client_1.1.84.716.gc5f8b819-2_amd64.deb"
                         .into(),
                 sha256sum: "08e6b2666dc2a39624890e553a3046d05ecebe17bcc2fe930d49314b2fb812c7"
                     .into(),
