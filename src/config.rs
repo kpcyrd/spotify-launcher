@@ -50,6 +50,8 @@ impl ConfigFile {
 pub struct SpotifyConfig {
     #[serde(default)]
     pub extra_arguments: Vec<String>,
+    #[serde(default)]
+    pub extra_env_vars: Vec<String>,
 }
 
 #[cfg(test)]

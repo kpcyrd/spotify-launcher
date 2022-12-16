@@ -155,6 +155,13 @@ fn start(args: &Args, cf: &ConfigFile, install_path: &Path) -> Result<()> {
     if args.no_exec {
         info!("Skipping exec because --no-exec was used");
     } else {
+        cf.spotify.extra_env_vars.iter().for_each(|x| {
+            let (k, v) = match x.split_once('=') {
+                None => (x.as_str(), ""),
+                Some(x) => x,
+            };
+            std::env::set_var(k, v);
+        });
         nix::unistd::execv(&bin, &exec_args)
             .with_context(|| anyhow!("Failed to exec {:?}", bin))?;
     }
