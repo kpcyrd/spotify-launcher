@@ -12,7 +12,7 @@ pub struct Args {
     #[clap(long)]
     pub install_dir: Option<PathBuf>,
     /// Verbose logs (can be used multiple times)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = clap::ArgAction::Count)]
     pub verbose: u8,
     /// Uri to pass to the spotify child process
     pub uri: Option<String>,

@@ -10,7 +10,7 @@ pub struct ProgressBar {
 impl ProgressBar {
     pub fn spawn() -> Result<ProgressBar> {
         let child = Command::new("zenity")
-            .args(&[
+            .args([
                 "--progress",
                 "--title",
                 "Downloading spotify",

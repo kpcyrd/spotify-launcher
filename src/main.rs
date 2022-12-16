@@ -63,7 +63,7 @@ async fn update(args: &Args, install_path: &Path) -> Result<()> {
 
     if should_update {
         let update = if let Some(deb_path) = &args.deb {
-            let deb = fs::read(&deb_path)
+            let deb = fs::read(deb_path)
                 .with_context(|| anyhow!("Failed to read .deb file from {:?}", deb_path))?;
             VersionCheck {
                 deb: Some(deb),
@@ -109,8 +109,8 @@ async fn update(args: &Args, install_path: &Path) -> Result<()> {
 
             if install_path != new_install_path {
                 info!("Setting new directory active");
-                fs::create_dir(&install_path).ok();
-                libxch::xch_non_atomic(&install_path, &new_install_path).with_context(|| {
+                fs::create_dir(install_path).ok();
+                libxch::xch_non_atomic(install_path, &new_install_path).with_context(|| {
                     anyhow!(
                         "Failed to update directories {:?} and {:?}",
                         install_path,
@@ -129,7 +129,7 @@ async fn update(args: &Args, install_path: &Path) -> Result<()> {
             last_update_check: SystemTime::now(),
             version: update.version,
         })?;
-        fs::write(&paths::state_file_path()?, buf).context("Failed to write state file")?;
+        fs::write(paths::state_file_path()?, buf).context("Failed to write state file")?;
     } else {
         info!("No update needed");
     }

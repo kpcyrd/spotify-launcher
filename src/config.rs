@@ -23,14 +23,15 @@ impl ConfigFile {
     }
 
     pub fn locate_file() -> Result<Option<PathBuf>> {
-        for path in &[dirs::config_dir(), Some(PathBuf::from("/etc/"))] {
-            if let Some(path) = path {
-                let path = path.join("spotify-launcher.conf");
-                debug!("Searching for configuration file at {:?}", path);
-                if path.exists() {
-                    debug!("Found configuration file at {:?}", path);
-                    return Ok(Some(path));
-                }
+        for path in [dirs::config_dir(), Some(PathBuf::from("/etc/"))]
+            .into_iter()
+            .flatten()
+        {
+            let path = path.join("spotify-launcher.conf");
+            debug!("Searching for configuration file at {:?}", path);
+            if path.exists() {
+                debug!("Found configuration file at {:?}", path);
+                return Ok(Some(path));
             }
         }
         Ok(None)
