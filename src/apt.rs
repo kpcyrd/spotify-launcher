@@ -12,8 +12,8 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new() -> Result<Client> {
-        let client = http::Client::new()?;
+    pub fn new(timeout: Option<u64>) -> Result<Client> {
+        let client = http::Client::new(timeout)?;
         Ok(Client { client })
     }
 

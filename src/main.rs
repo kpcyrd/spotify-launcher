@@ -70,7 +70,7 @@ async fn update(args: &Args, install_path: &Path) -> Result<()> {
                 version: "0".to_string(),
             }
         } else {
-            let client = Client::new()?;
+            let client = Client::new(args.timeout)?;
             let pkg = client.fetch_pkg_release(&args.keyring).await?;
 
             match state {

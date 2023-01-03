@@ -25,6 +25,6 @@ serde_json = "1.0.81"
 sha2 = "0.10.2"
 tar = "0.4.38"
 tempfile = "3.3.0"
-tokio = { version = "1.18.1", features = ["macros", "rt-multi-thread", "process"] }
+tokio = { version = "1.18.1", features = ["macros", "rt-multi-thread", "process", "time"] }
 toml = "0.5.9"
 xch = "1.1.0"
