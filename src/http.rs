@@ -12,7 +12,7 @@ impl Client {
         let client = reqwest::ClientBuilder::new()
             .user_agent(format!("spotify-launcher/{}", env!("CARGO_PKG_VERSION")))
             .connect_timeout(Duration::from_secs(7))
-            .timeout(Duration::from_secs(3600)) // kinda arbitrary
+            .timeout(Duration::from_secs(10))
             .redirect(reqwest::redirect::Policy::limited(8))
             .build()
             .context("Failed to create http client")?;
