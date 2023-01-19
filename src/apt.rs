@@ -4,6 +4,7 @@ use crate::errors::*;
 use crate::http;
 use crate::pgp;
 use crate::progress::ProgressBar;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::Path;
 
@@ -91,8 +92,10 @@ impl Client {
         let mut pb = ProgressBar::spawn()?;
         let mut dl = self.client.fetch_stream(&url).await?;
         let mut deb = Vec::new();
+        let mut hasher = Sha256::new();
         while let Some(chunk) = dl.chunk().await? {
             deb.extend(&chunk);
+            hasher.update(&chunk);
             let progress = (dl.progress as f64 / dl.total as f64 * 100.0) as u64;
             pb.update(progress).await?;
             debug!(
@@ -104,7 +107,7 @@ impl Client {
 
         // verify checksum
         info!("Verifying with sha256sum hash...");
-        let downloaded_sha256sum = crypto::sha256sum(&deb);
+        let downloaded_sha256sum = format!("{:x}", hasher.finalize());
         if pkg.sha256sum != downloaded_sha256sum {
             bail!(
                 "Downloaded bytes don't match signed sha256sum (signed: {:?}, downloaded: {:?})",
