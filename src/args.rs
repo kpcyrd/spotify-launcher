@@ -27,6 +27,9 @@ pub struct Args {
     pub force_update: bool,
     /// Run the install/update code but don't actually run the final binary
     #[arg(long)]
+    pub print_deb_url: bool,
+    /// Check for the latest .deb and print its url
+    #[arg(long)]
     pub no_exec: bool,
     /// The timeout to use for http connections and requests
     #[arg(long)]

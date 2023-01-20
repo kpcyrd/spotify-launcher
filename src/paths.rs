@@ -1,8 +1,8 @@
 use crate::errors::*;
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::path::PathBuf;
 use std::time::SystemTime;
+use tokio::fs;
 
 pub fn spotify_launcher_path() -> Result<PathBuf> {
     let path = dirs::data_dir().context("Failed to detect data directory")?;
@@ -30,17 +30,24 @@ pub struct State {
     pub last_update_check: SystemTime,
 }
 
-pub fn load_state_file() -> Result<Option<State>> {
+pub async fn load_state_file() -> Result<Option<State>> {
     let state_file_path = state_file_path()?;
-    if state_file_path.exists() {
+    if fs::metadata(&state_file_path).await.is_ok() {
         debug!("Reading state file from {:?}...", state_file_path);
-        let buf =
-            fs::read(&state_file_path).context("Failed to read spotify-launcher state file")?;
+        let buf = fs::read(&state_file_path).await.with_context(|| {
+            anyhow!(
+                "Failed to read spotify-launcher state file at {:?}",
+                state_file_path
+            )
+        })?;
         let state = serde_json::from_slice::<State>(&buf);
         debug!("Loaded state: {:?}", state);
         Ok(state.ok())
     } else {
-        debug!("State file does not exist, using empty state");
+        debug!(
+            "State file at {:?} does not exist, using empty state",
+            state_file_path
+        );
         Ok(None)
     }
 }

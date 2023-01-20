@@ -40,6 +40,12 @@ pub struct Pkg {
     pub sha256sum: String,
 }
 
+impl Pkg {
+    pub fn download_url(&self) -> String {
+        format!("http://repository.spotify.com/{}", self.filename)
+    }
+}
+
 #[derive(Debug, PartialEq, Default)]
 pub struct NewPkg {
     package: Option<String>,

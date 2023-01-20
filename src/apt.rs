@@ -86,7 +86,7 @@ impl Client {
             "Downloading deb file for {:?} version={:?} ({:?})",
             filename, pkg.package, pkg.version
         );
-        let url = format!("http://repository.spotify.com/{}", pkg.filename);
+        let url = pkg.download_url();
 
         // download
         let mut pb = ProgressBar::spawn()?;
