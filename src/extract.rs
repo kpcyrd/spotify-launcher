@@ -6,6 +6,16 @@ use std::io::Read;
 use std::path::Path;
 use tokio::fs;
 
+async fn atomic_swap(src: &Path, target: &Path) -> Result<()> {
+    info!(
+        "Atomically swapping new directory at {:?} with {:?}...",
+        src, target
+    );
+    fs::create_dir(target).await.ok();
+    libxch::xch(src, target)?;
+    Ok(())
+}
+
 async fn extract_data<R: Read>(
     mut tar: tar::Archive<R>,
     args: &Args,
@@ -22,18 +32,24 @@ async fn extract_data<R: Read>(
         .context("Failed to extract spotify")?;
 
     if install_path != new_install_path {
-        info!("Setting new directory active");
-        fs::create_dir(install_path).await.ok();
-        libxch::xch_non_atomic(install_path, &new_install_path).with_context(|| {
-            anyhow!(
-                "Failed to update directories {:?} and {:?}",
-                install_path,
-                new_install_path
-            )
-        })?;
-        debug!("Removing old directory...");
-        if let Err(err) = fs::remove_dir_all(&new_install_path).await {
-            warn!("Failed to delete old directory: {:?}", err);
+        if let Err(err) = atomic_swap(&new_install_path, install_path).await {
+            warn!(
+                "Failed to swap {:?} with {:?}: {:#}",
+                &new_install_path, install_path, err
+            );
+            debug!("Falling back to non-atomic swap, removing old directory...");
+            fs::remove_dir_all(&install_path)
+                .await
+                .context("Failed to delete old directory")?;
+            debug!("Moving new directory in place...");
+            fs::rename(&new_install_path, &install_path)
+                .await
+                .context("Failed to move new directory in place")?;
+        } else {
+            debug!("Removing old directory...");
+            if let Err(err) = fs::remove_dir_all(&new_install_path).await {
+                warn!("Failed to delete old directory: {:?}", err);
+            }
         }
     }
     Ok(())
