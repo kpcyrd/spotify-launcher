@@ -1,38 +1,18 @@
 use clap::Parser;
 use env_logger::Env;
-use libflate::gzip::Decoder;
 use spotify_launcher::apt::Client;
 use spotify_launcher::args::Args;
 use spotify_launcher::config::ConfigFile;
 use spotify_launcher::errors::*;
+use spotify_launcher::extract;
 use spotify_launcher::paths;
 use std::ffi::CString;
-use std::fs;
-use std::io::Read;
 use std::path::Path;
 use std::time::Duration;
 use std::time::SystemTime;
+use tokio::fs;
 
 const UPDATE_CHECK_INTERVAL: u64 = 3600 * 24;
-
-fn extract_tar(mut deb: &[u8]) -> Result<Vec<u8>> {
-    let mut ar_reader = ar::Archive::new(&mut deb);
-    while let Some(entry) = ar_reader.next_entry() {
-        let mut entry = entry?;
-
-        if entry.header().identifier() == b"data.tar.gz" {
-            debug!("Found data.tar.gz, decompressing...");
-            let mut decoder = Decoder::new(&mut entry)?;
-            let mut tar = Vec::new();
-            decoder.read_to_end(&mut tar)?;
-
-            debug!("Extracted tar data, {} bytes", tar.len());
-            return Ok(tar);
-        }
-    }
-
-    bail!("Failed to find data entry in .deb");
-}
 
 struct VersionCheck {
     deb: Option<Vec<u8>>,
@@ -64,6 +44,7 @@ async fn update(args: &Args, install_path: &Path) -> Result<()> {
     if should_update {
         let update = if let Some(deb_path) = &args.deb {
             let deb = fs::read(deb_path)
+                .await
                 .with_context(|| anyhow!("Failed to read .deb file from {:?}", deb_path))?;
             VersionCheck {
                 deb: Some(deb),
@@ -92,36 +73,7 @@ async fn update(args: &Args, install_path: &Path) -> Result<()> {
         };
 
         if let Some(deb) = update.deb {
-            let tar = extract_tar(&deb).context("Failed to process .deb file")?;
-
-            let mut tar = &tar[..];
-            let mut tar = tar::Archive::new(&mut tar);
-
-            let new_install_path = if let Some(path) = args.install_dir.clone() {
-                path
-            } else {
-                paths::new_install_path()?
-            };
-
-            info!("Extracting to {:?}...", new_install_path);
-            tar.unpack(&new_install_path)
-                .context("Failed to extract spotify")?;
-
-            if install_path != new_install_path {
-                info!("Setting new directory active");
-                fs::create_dir(install_path).ok();
-                libxch::xch_non_atomic(install_path, &new_install_path).with_context(|| {
-                    anyhow!(
-                        "Failed to update directories {:?} and {:?}",
-                        install_path,
-                        new_install_path
-                    )
-                })?;
-                debug!("Removing old directory...");
-                if let Err(err) = fs::remove_dir_all(&new_install_path) {
-                    warn!("Failed to delete old directory: {:?}", err);
-                }
-            }
+            extract::pkg(&deb[..], args, install_path).await?;
         }
 
         debug!("Updating state file");
@@ -129,7 +81,9 @@ async fn update(args: &Args, install_path: &Path) -> Result<()> {
             last_update_check: SystemTime::now(),
             version: update.version,
         })?;
-        fs::write(paths::state_file_path()?, buf).context("Failed to write state file")?;
+        fs::write(paths::state_file_path()?, buf)
+            .await
+            .context("Failed to write state file")?;
     } else {
         info!("No update needed");
     }
