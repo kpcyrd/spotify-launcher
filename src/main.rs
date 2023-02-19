@@ -3,6 +3,7 @@ use env_logger::Env;
 use spotify_launcher::apt::Client;
 use spotify_launcher::args::Args;
 use spotify_launcher::config::ConfigFile;
+use spotify_launcher::dbus::*;
 use spotify_launcher::errors::*;
 use spotify_launcher::extract;
 use spotify_launcher::paths;
@@ -158,8 +159,16 @@ async fn main() -> Result<()> {
         } else {
             info!("No update needed");
         }
-        start(&args, &cf, &install_path)?;
+        // First check if Spotify is already running and
+        // try to open this URI in the existing Spotify instance over dbus.
+        // If this fails, we will fallback to starting a new Spotify instance.
+        if args.uri.is_some() && is_spotify_running() {
+            match play_remote(args.uri.as_ref().unwrap()) {
+                Ok(_) => return Ok(()),
+                Err(e) => warn!("Failed to connect to existing Spotify instance: {e}"),
+            }
+        }
     }
 
-    Ok(())
+    start(&args, &cf, &install_path)
 }

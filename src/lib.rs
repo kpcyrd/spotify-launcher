@@ -2,6 +2,7 @@ pub mod apt;
 pub mod args;
 pub mod config;
 pub mod crypto;
+pub mod dbus;
 pub mod deb;
 pub mod errors;
 pub mod extract;
