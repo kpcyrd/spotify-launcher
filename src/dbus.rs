@@ -25,13 +25,17 @@ fn parse_uri(uri: &String) -> Result<String> {
     // URIs may be of one of the following forms:
     // 1. spotify:type:id
     // 2. spotify://type/id
+    // 3. https://open.spotify.com/type/id
     //
     // Here type must be something like "track" or "album"
     // and id is a unique id consisting of alphanumerical symbols.
     //
     // The dbus interface only understands the first syntax,
-    // so we have to transform the second scheme into the first one.
-    let r = Regex::new(r"^spotify:(?://)?(?P<type>[a-z]+)(?::|/)(?P<id>[[:alnum:]]+)$").unwrap();
+    // so we have to transform the other schemes into the first scheme.
+    //
+    // We employ a very strict Regex here, so that we never mistakenly pass a wrong URI over dbus by accident.
+    // If the Regex doesn't match, it is better to bail out and open Spotify normally.
+    let r = Regex::new(r"^(?:spotify|https):(?://(?:open\.spotify\.com/)?)?(?P<type>[a-z]+)(?::|/)(?P<id>[[:alnum:]]+)$").unwrap();
     match r.captures(&sanitized_uri) {
         Some(c) => Ok(format!(
             "spotify:{}:{}",
