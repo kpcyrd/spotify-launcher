@@ -29,13 +29,14 @@ fn parse_uri(uri: &String) -> Result<String> {
     //
     // Here type must be something like "track" or "album"
     // and id is a unique id consisting of alphanumerical symbols.
+    // Also see: https://www.iana.org/assignments/uri-schemes/prov/spotify
     //
     // The dbus interface only understands the first syntax,
     // so we have to transform the other schemes into the first scheme.
     //
     // We employ a very strict Regex here, so that we never mistakenly pass a wrong URI over dbus by accident.
     // If the Regex doesn't match, it is better to bail out and open Spotify normally.
-    let r = Regex::new(r"^(?:spotify|https):(?://(?:open\.spotify\.com/)?)?(?P<type>[a-z]+)(?::|/)(?P<id>[[:alnum:]]+)$").unwrap();
+    let r = Regex::new(r"^(?:spotify|https):(?://(?:open\.spotify\.com/)?)?(?P<type>(?:artist|album|track|search))(?::|/)(?P<id>[[:alnum:]]+)$").unwrap();
     match r.captures(&sanitized_uri) {
         Some(c) => Ok(format!(
             "spotify:{}:{}",
