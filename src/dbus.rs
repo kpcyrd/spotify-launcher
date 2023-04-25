@@ -63,3 +63,51 @@ pub fn play_remote(uri: &String) -> Result<Arc<zbus::Message>> {
         &(parsed),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_internal_scheme() -> Result<()> {
+        let u = parse_uri(&"spotify:track:5GJaxfibCRCQXDVPgHJv0s?si=43a3210a84c340dc".to_string())?;
+        assert_eq!(u, "spotify:track:5GJaxfibCRCQXDVPgHJv0s");
+        Ok(())
+    }
+
+    #[test]
+    fn test_xdg_open_scheme() -> Result<()> {
+        let u =
+            parse_uri(&"spotify://track/5GJaxfibCRCQXDVPgHJv0s?si=43a3210a84c340dc".to_string())?;
+        assert_eq!(u, "spotify:track:5GJaxfibCRCQXDVPgHJv0s");
+        Ok(())
+    }
+
+    #[test]
+    fn test_https_scheme() -> Result<()> {
+        let u = parse_uri(
+            &"https://open.spotify.com/track/5GJaxfibCRCQXDVPgHJv0s?si=43a3210a84c340dc"
+                .to_string(),
+        )?;
+        assert_eq!(u, "spotify:track:5GJaxfibCRCQXDVPgHJv0s");
+        Ok(())
+    }
+
+    #[test]
+    fn test_passthrough_wrong_type() -> Result<()> {
+        assert!(parse_uri(
+            &"spotify://invalid/5GJaxfibCRCQXDVPgHJv0s?si=43a3210a84c340dc".to_string()
+        )
+        .is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn test_passthrough_wrong_scheme() -> Result<()> {
+        assert!(parse_uri(
+            &"invalid://track/5GJaxfibCRCQXDVPgHJv0s?si=43a3210a84c340dc".to_string()
+        )
+        .is_err());
+        Ok(())
+    }
+}
