@@ -53,6 +53,8 @@ pub struct SpotifyConfig {
     pub extra_arguments: Vec<String>,
     #[serde(default)]
     pub extra_env_vars: Vec<String>,
+    #[serde(default)]
+    pub disable_dbus: bool,
 }
 
 #[cfg(test)]

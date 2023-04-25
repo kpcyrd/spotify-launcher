@@ -162,7 +162,7 @@ async fn main() -> Result<()> {
         // First check if Spotify is already running and
         // try to open this URI in the existing Spotify instance over dbus.
         // If this fails, we will fallback to starting a new Spotify instance.
-        if args.uri.is_some() && is_spotify_running() {
+        if !cf.spotify.disable_dbus && args.uri.is_some() && is_spotify_running() {
             match play_remote(args.uri.as_ref().unwrap()) {
                 Ok(_) => return Ok(()),
                 Err(e) => warn!("Failed to connect to existing Spotify instance: {e}"),
