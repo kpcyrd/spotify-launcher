@@ -1,35 +1,75 @@
 use crate::errors::*;
 use std::collections::HashMap;
+use std::env;
 
-pub fn parse_release_file(data: &str) -> Result<HashMap<String, String>> {
-    let mut section = None;
-    let mut sha256_sums = HashMap::new();
+#[derive(Debug, PartialEq)]
+pub enum Architecture {
+    Amd64,
+    I386,
+    Unknown(&'static str),
+}
 
-    for line in data.lines() {
-        trace!("Release file parser got line: {:?}", line);
-        if !line.starts_with(' ') && line.ends_with(':') {
-            section = Some(line);
-            continue;
-        }
-
-        if section == Some("SHA256:") {
-            let (hash, line) = line
-                .trim()
-                .split_once(' ')
-                .context("Malformed sha256 line in release file")?;
-            let (_, file) = line
-                .rsplit_once(' ')
-                .context("Malformed sha256 line in release file")?;
-
-            debug!(
-                "Adding file hash from release file, {:?} => {:?}",
-                file, hash
-            );
-            sha256_sums.insert(file.to_string(), hash.to_string());
+impl Architecture {
+    pub const fn current() -> Architecture {
+        if cfg!(target_arch = "x86_64") {
+            Architecture::Amd64
+        } else if cfg!(target_arch = "x86") {
+            Architecture::I386
+        } else {
+            Architecture::Unknown(env::consts::ARCH)
         }
     }
 
-    Ok(sha256_sums)
+    pub const fn to_debian_str(&self) -> &str {
+        match self {
+            Architecture::Amd64 => "amd64",
+            Architecture::I386 => "i386",
+            Architecture::Unknown(arch) => arch,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Default)]
+pub struct Release {
+    pub architectures: Vec<String>,
+    pub sha256_sums: HashMap<String, String>,
+}
+
+pub fn parse_release_file(data: &str) -> Result<Release> {
+    let mut section = None;
+    let mut release = Release::default();
+
+    for line in data.lines() {
+        trace!("Release file parser got line: {:?}", line);
+
+        if let Some(line) = line.strip_prefix(' ') {
+            if section == Some("SHA256:") {
+                let (hash, line) = line
+                    .split_once(' ')
+                    .context("Malformed sha256 line in release file")?;
+                let (_, file) = line
+                    .rsplit_once(' ')
+                    .context("Malformed sha256 line in release file")?;
+
+                debug!(
+                    "Adding file hash from release file, {:?} => {:?}",
+                    file, hash
+                );
+                release
+                    .sha256_sums
+                    .insert(file.to_string(), hash.to_string());
+            }
+        } else if line.ends_with(':') {
+            section = Some(line);
+        } else if let Some((key, value)) = line.split_once(": ") {
+            if key == "Architectures" {
+                let list = value.split(' ').map(String::from);
+                release.architectures = list.collect();
+            }
+        }
+    }
+
+    Ok(release)
 }
 
 #[derive(Debug, PartialEq)]
@@ -148,7 +188,9 @@ SHA256:
 "#;
         let parsed = parse_release_file(data)?;
         assert_eq!(parsed, {
-            let mut m = HashMap::new();
+            let mut release = Release::default();
+            release.architectures = vec!["amd64".to_string(), "i386".to_string()];
+            let m = &mut release.sha256_sums;
             m.insert(
                 "non-free/binary-amd64/Packages".into(),
                 "7eb86d0a8bbbfb356b2c641f039214ad30f7f5d7faabdf546d5f83d4f0f574cd".into(),
@@ -185,7 +227,7 @@ SHA256:
                 "non-free/source/Release".into(),
                 "963be5cb6b84350b820fd4bb4ce5059bb4cbb16dcfa7614c630ded76a09155a5".into(),
             );
-            m
+            release
         });
         Ok(())
     }

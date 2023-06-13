@@ -44,14 +44,28 @@ impl Client {
 
         info!("Signature verified successfully!");
         let release = deb::parse_release_file(&String::from_utf8(release)?)?;
+        let arch = deb::Architecture::current();
+        let debian_arch_str = arch.to_debian_str();
+
+        if !release.architectures.iter().any(|a| a == debian_arch_str) {
+            bail!(
+                "There are no packages for your cpu's architecture (cpu={:?}, supported={:?})",
+                debian_arch_str,
+                release.architectures
+            )
+        }
+
+        let packages_path = format!("non-free/binary-{debian_arch_str}/Packages");
+
         let packages_sha256sum = release
-            .get("non-free/binary-amd64/Packages")
+            .sha256_sums
+            .get(&packages_path)
             .context("Missing sha256sum for package index")?;
 
         info!("Downloading package index...");
         let pkg_index = self
             .client
-            .fetch("http://repository.spotify.com/dists/testing/non-free/binary-amd64/Packages")
+            .fetch(&format!("http://repository.spotify.com/dists/testing/{packages_path}"))
             .await?;
 
         info!("Verifying with sha256sum hash...");
