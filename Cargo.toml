@@ -14,9 +14,9 @@ anyhow = "1.0.57"
 ar = "0.9.0"
 bytes = "1.1.0"
 clap = { version = "4", features = ["derive"] }
-dirs = "4.0.0"
+dirs = "5"
 env_logger = "0.10"
-libflate = "1.2.0"
+libflate = "2"
 log = "0.4.17"
 nix = { version = "0.26", default-features = false, features = ["process"] }
 reqwest = "0.11.10"
@@ -26,5 +26,5 @@ sha2 = "0.10.2"
 tar = "0.4.38"
 tempfile = "3.3.0"
 tokio = { version = "1.18.1", features = ["macros", "rt-multi-thread", "process", "time", "fs"] }
-toml = "0.5.9"
+toml = "0.7"
 xch = "1.1.0"
