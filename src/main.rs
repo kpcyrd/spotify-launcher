@@ -106,7 +106,7 @@ fn start(args: &Args, cf: &ConfigFile, install_path: &Path) -> Result<()> {
     }
 
     if let Some(uri) = &args.uri {
-        exec_args.push(CString::new(format!("--uri={}", uri))?);
+        exec_args.push(CString::new(uri.clone())?);
     }
 
     debug!("Assembled command: {:?}", exec_args);
