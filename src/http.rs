@@ -1,8 +1,12 @@
-use crate::errors::*;
-use bytes::Bytes;
-use reqwest::Response;
 use std::time::Duration;
+
+use bytes::Bytes;
+use futures_util::stream::StreamExt;
+use reqwest::header::{HeaderMap, HeaderValue, CONTENT_LENGTH, RANGE};
+use reqwest::Response;
 use tokio::time;
+
+use crate::errors::*;
 
 pub struct Client {
     client: reqwest::Client,
@@ -61,6 +65,31 @@ impl Client {
         }
     }
 
+    async fn send_head(&self, url: &str) -> Result<Response> {
+        let future = async {
+            let resp = self
+                .client
+                .head(url)
+                .send()
+                .await
+                .context("Failed to send http request")?;
+
+            let status = resp.status();
+            if !status.is_success() {
+                bail!("Unexpected http status code: {:?}", status);
+            }
+
+            Ok(resp)
+        };
+        if let Some(timeout) = self.timeout {
+            time::timeout(timeout, future)
+                .await
+                .context("Request timed out")?
+        } else {
+            future.await
+        }
+    }
+
     pub async fn fetch(&self, url: &str) -> Result<Vec<u8>> {
         debug!("Fetching {:?}...", url);
         let resp = self.send_get(url).await?;
@@ -80,13 +109,19 @@ impl Client {
     }
 
     pub async fn fetch_stream(&self, url: &str) -> Result<Download> {
-        debug!("Downloading {:?}...", url);
-        let resp = self.send_get(url).await?;
-
-        let total = resp.content_length().unwrap_or(0);
+        let total = self
+            .send_head(url)
+            .await?
+            .headers()
+            .get(CONTENT_LENGTH)
+            .map(|val| val.to_str())
+            .context("missing CONTENT_LENGTH")?
+            .map(str::parse)??;
+        debug!("{total} bytes to download");
 
         Ok(Download {
-            resp,
+            url: url.to_owned(),
+            client: Client::new(self.timeout.map(|duration| duration.as_secs()))?,
             timeout: self.timeout,
             progress: 0,
             total,
@@ -95,7 +130,8 @@ impl Client {
 }
 
 pub struct Download {
-    resp: reqwest::Response,
+    url: String,
+    client: Client,
     timeout: Option<Duration>,
     pub progress: u64,
     pub total: u64,
@@ -103,21 +139,43 @@ pub struct Download {
 
 impl Download {
     pub async fn chunk(&mut self) -> Result<Option<Bytes>> {
-        let future = self.resp.chunk();
-        let bytes = if let Some(timeout) = self.timeout {
-            if let Ok(bytes) = time::timeout(timeout, future).await {
-                bytes?
+        let begin = self.progress;
+        let end = (begin + (self.total / 10)).min(self.total);
+
+        if self.total <= self.progress {
+            debug!("finished!");
+            return Ok(None);
+        }
+        info!("fetching range {begin} => {end}");
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            RANGE,
+            HeaderValue::from_str(&format!("bytes={begin}-{end}"))?,
+        );
+        let future = self.client.client.get(&self.url).headers(headers).send();
+        let response = if let Some(timeout) = self.timeout {
+            if let Ok(bytes) = time::timeout(timeout, future).await? {
+                bytes
             } else {
                 bail!("Download timed out due to inactivity");
             }
         } else {
             future.await?
         };
-        if let Some(bytes) = bytes {
-            self.progress += bytes.len() as u64;
-            Ok(Some(bytes))
-        } else {
-            Ok(None)
-        }
+
+        // filter out EOF
+        let bytes = response
+            .bytes_stream()
+            .collect::<Vec<_>>()
+            .await
+            .iter()
+            .filter_map(|chunk| match chunk {
+                Ok(bytes) => Some(bytes.to_vec()),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+            .concat();
+        self.progress += bytes.len() as u64;
+        Ok(Some(bytes.into()))
     }
 }

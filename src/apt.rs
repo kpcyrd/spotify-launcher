@@ -65,7 +65,9 @@ impl Client {
         info!("Downloading package index...");
         let pkg_index = self
             .client
-            .fetch(&format!("http://repository.spotify.com/dists/testing/{packages_path}"))
+            .fetch(&format!(
+                "http://repository.spotify.com/dists/testing/{packages_path}"
+            ))
             .await?;
 
         info!("Verifying with sha256sum hash...");

@@ -19,7 +19,7 @@ env_logger = "0.10"
 libflate = "2"
 log = "0.4.17"
 nix = { version = "0.26", default-features = false, features = ["process"] }
-reqwest = "0.11.10"
+reqwest = { version = "0.11.10", features = ["stream"] }
 serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.81"
 sha2 = "0.10.2"
@@ -28,3 +28,4 @@ tempfile = "3.3.0"
 tokio = { version = "1.18.1", features = ["macros", "rt-multi-thread", "process", "time", "fs"] }
 toml = "0.7"
 xch = "1.1.0"
+futures-util = "0.3"
