@@ -25,7 +25,10 @@ async fn should_update(args: &Args, state: Option<&paths::State>) -> Result<bool
     } else if args.skip_update {
         Ok(false)
     } else if let Some(state) = &state {
-        let since_update = SystemTime::now().duration_since(state.last_update_check)?;
+        let Ok(since_update) = SystemTime::now().duration_since(state.last_update_check) else {
+            // if the last update time is somehow in the future, check for updates now
+            return Ok(true);
+        };
 
         let hours_since = since_update.as_secs() / 3600;
         let days_since = hours_since / 24;
