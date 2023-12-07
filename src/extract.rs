@@ -33,10 +33,7 @@ async fn extract_data<R: Read>(
 
     if install_path != new_install_path {
         if let Err(err) = atomic_swap(&new_install_path, install_path).await {
-            warn!(
-                "Failed to swap {:?} with {:?}: {:#}",
-                &new_install_path, install_path, err
-            );
+            warn!("Failed to swap {new_install_path:?} with {install_path:?}: {err:#}");
             debug!("Falling back to non-atomic swap, removing old directory...");
             fs::remove_dir_all(&install_path)
                 .await
@@ -48,7 +45,7 @@ async fn extract_data<R: Read>(
         } else {
             debug!("Removing old directory...");
             if let Err(err) = fs::remove_dir_all(&new_install_path).await {
-                warn!("Failed to delete old directory: {:?}", err);
+                warn!("Failed to delete old directory: {:#}", err);
             }
         }
     }
