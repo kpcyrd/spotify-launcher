@@ -1,5 +1,6 @@
 use clap::Parser;
 use env_logger::Env;
+use spotify_launcher::apt;
 use spotify_launcher::apt::Client;
 use spotify_launcher::args::Args;
 use spotify_launcher::config::ConfigFile;
@@ -51,7 +52,12 @@ async fn print_deb_url(args: &Args) -> Result<()> {
     Ok(())
 }
 
-async fn update(args: &Args, state: Option<&paths::State>, install_path: &Path) -> Result<()> {
+async fn update(
+    args: &Args,
+    state: Option<&paths::State>,
+    install_path: &Path,
+    download_attempts: usize,
+) -> Result<()> {
     let update = if let Some(deb_path) = &args.deb {
         let deb = fs::read(deb_path)
             .await
@@ -73,7 +79,7 @@ async fn update(args: &Args, state: Option<&paths::State>, install_path: &Path) 
                 }
             }
             _ => {
-                let deb = client.download_pkg(&pkg).await?;
+                let deb = client.download_pkg(&pkg, download_attempts).await?;
                 VersionCheck {
                     deb: Some(deb),
                     version: pkg.version,
@@ -152,12 +158,18 @@ async fn main() -> Result<()> {
     };
     debug!("Using install path: {:?}", install_path);
 
+    let download_attempts = args.download_attempts.unwrap_or_else(|| {
+        cf.spotify
+            .download_attempts
+            .unwrap_or(apt::DEFAULT_DOWNLOAD_ATTEMPTS)
+    });
+
     if args.print_deb_url {
         print_deb_url(&args).await?;
     } else {
         let state = paths::load_state_file().await?;
         if should_update(&args, state.as_ref()).await? {
-            update(&args, state.as_ref(), &install_path).await?;
+            update(&args, state.as_ref(), &install_path, download_attempts).await?;
         } else {
             info!("No update needed");
         }

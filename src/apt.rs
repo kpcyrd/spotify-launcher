@@ -8,6 +8,8 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::Path;
 
+pub const DEFAULT_DOWNLOAD_ATTEMPTS: usize = 5;
+
 pub struct Client {
     client: http::Client,
 }
@@ -115,7 +117,7 @@ impl Client {
         Ok(())
     }
 
-    pub async fn download_pkg(&self, pkg: &Pkg) -> Result<Vec<u8>> {
+    pub async fn download_pkg(&self, pkg: &Pkg, download_attempts: usize) -> Result<Vec<u8>> {
         let filename = pkg
             .filename
             .rsplit_once('/')
@@ -133,7 +135,16 @@ impl Client {
         let mut deb = Vec::new();
         let mut hasher = Sha256::new();
         let mut offset = None;
-        for i in 0..5 {
+
+        let mut i: usize = 0;
+        loop {
+            // increast the counter until usize::MAX, but do not overflow
+            i = i.saturating_add(1);
+            if download_attempts > 0 && i > download_attempts {
+                // number of download attempts exceeded
+                break;
+            }
+
             if i > 0 {
                 info!("Retrying download...");
             }
