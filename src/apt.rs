@@ -8,6 +8,8 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::Path;
 
+pub const DEFAULT_DOWNLOAD_ATTEMPTS: usize = 5;
+
 pub struct Client {
     client: http::Client,
 }
@@ -91,7 +93,31 @@ impl Client {
         Ok(pkg)
     }
 
-    pub async fn download_pkg(&self, pkg: &Pkg) -> Result<Vec<u8>> {
+    async fn attempt_download(
+        &self,
+        url: &str,
+        deb: &mut Vec<u8>,
+        hasher: &mut Sha256,
+        pb: &mut ProgressBar,
+        offset: &mut Option<u64>,
+    ) -> Result<()> {
+        let mut dl = self.client.fetch_stream(url, *offset).await?;
+        while let Some(chunk) = dl.chunk().await? {
+            deb.extend(&chunk);
+            hasher.update(&chunk);
+            *offset = Some(dl.progress);
+
+            let progress = (dl.progress as f64 / dl.total as f64 * 100.0) as u64;
+            pb.update(progress).await?;
+            debug!(
+                "Download progress: {}%, {}/{}",
+                progress, dl.progress, dl.total
+            );
+        }
+        Ok(())
+    }
+
+    pub async fn download_pkg(&self, pkg: &Pkg, download_attempts: usize) -> Result<Vec<u8>> {
         let filename = pkg
             .filename
             .rsplit_once('/')
@@ -106,32 +132,47 @@ impl Client {
 
         // download
         let mut pb = ProgressBar::spawn()?;
-        let mut dl = self.client.fetch_stream(&url).await?;
         let mut deb = Vec::new();
         let mut hasher = Sha256::new();
-        while let Some(chunk) = dl.chunk().await? {
-            deb.extend(&chunk);
-            hasher.update(&chunk);
-            let progress = (dl.progress as f64 / dl.total as f64 * 100.0) as u64;
-            pb.update(progress).await?;
-            debug!(
-                "Download progress: {}%, {}/{}",
-                progress, dl.progress, dl.total
-            );
+        let mut offset = None;
+
+        let mut i: usize = 0;
+        loop {
+            // increast the counter until usize::MAX, but do not overflow
+            i = i.saturating_add(1);
+            if download_attempts > 0 && i > download_attempts {
+                // number of download attempts exceeded
+                break;
+            }
+
+            if i > 0 {
+                info!("Retrying download...");
+            }
+
+            if let Err(err) = self
+                .attempt_download(&url, &mut deb, &mut hasher, &mut pb, &mut offset)
+                .await
+            {
+                warn!("Download has failed: {err:#}");
+            } else {
+                pb.close().await?;
+
+                // verify checksum
+                info!("Verifying with sha256sum hash...");
+                let downloaded_sha256sum = format!("{:x}", hasher.finalize());
+                if pkg.sha256sum != downloaded_sha256sum {
+                    bail!(
+                        "Downloaded bytes don't match signed sha256sum (signed: {:?}, downloaded: {:?})",
+                        pkg.sha256sum,
+                        downloaded_sha256sum
+                    );
+                }
+
+                return Ok(deb);
+            }
         }
+
         pb.close().await?;
-
-        // verify checksum
-        info!("Verifying with sha256sum hash...");
-        let downloaded_sha256sum = format!("{:x}", hasher.finalize());
-        if pkg.sha256sum != downloaded_sha256sum {
-            bail!(
-                "Downloaded bytes don't match signed sha256sum (signed: {:?}, downloaded: {:?})",
-                pkg.sha256sum,
-                downloaded_sha256sum
-            );
-        }
-
-        Ok(deb)
+        bail!("Exceeded number of retries for download");
     }
 }

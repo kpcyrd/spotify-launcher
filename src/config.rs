@@ -53,6 +53,7 @@ pub struct SpotifyConfig {
     pub extra_arguments: Vec<String>,
     #[serde(default)]
     pub extra_env_vars: Vec<String>,
+    pub download_attempts: Option<usize>,
 }
 
 #[cfg(test)]
