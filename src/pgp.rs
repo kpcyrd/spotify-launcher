@@ -4,8 +4,6 @@ use std::process::Stdio;
 use tokio::process::Command;
 
 pub async fn verify_sig<P: AsRef<Path>>(sig: P, artifact: P, keyring: P) -> Result<()> {
-    // sqv --keyring ../data/pubkey_7A3A762FAFD4A51F.gpg -- Release.gpg Release
-
     let mut cmd = Command::new("sqv")
         .arg("--keyring")
         .arg(keyring.as_ref())
@@ -37,7 +35,7 @@ mod tests {
         verify_sig(
             "data/Release.gpg",
             "data/Release",
-            "data/pubkey_7A3A762FAFD4A51F.gpg",
+            "data/pubkey_6224F9941A8AA6D1.gpg",
         )
         .await
     }
