@@ -5,6 +5,7 @@ use libflate::gzip::Decoder;
 use std::io::Read;
 use std::path::Path;
 use tokio::fs;
+use xz2::read::XzDecoder;
 
 async fn atomic_swap(src: &Path, target: &Path) -> Result<()> {
     info!(
@@ -56,12 +57,20 @@ pub async fn pkg<R: Read>(deb: R, args: &Args, install_path: &Path) -> Result<()
     let mut ar = ar::Archive::new(deb);
     while let Some(entry) = ar.next_entry() {
         let mut entry = entry?;
-
-        if entry.header().identifier() == b"data.tar.gz" {
-            debug!("Found data.tar.gz in .deb");
-            let decoder = Decoder::new(&mut entry)?;
-            let tar = tar::Archive::new(decoder);
-            return extract_data(tar, args, install_path).await;
+        match entry.header().identifier() {
+            b"data.tar.gz" => {
+                debug!("Found data.tar.gz in .deb");
+                let decoder = Decoder::new(&mut entry)?;
+                let tar = tar::Archive::new(decoder);
+                return extract_data(tar, args, install_path).await;
+            }
+            b"data.tar.xz" => {
+                debug!("Found data.tar.xz in .deb");
+                let decoder = XzDecoder::new(&mut entry);
+                let tar = tar::Archive::new(decoder);
+                return extract_data(tar, args, install_path).await;
+            }
+            _ => (),
         }
     }
     bail!("Failed to find data entry in .deb");

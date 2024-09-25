@@ -28,3 +28,4 @@ tempfile = "3.3.0"
 tokio = { version = "1.18.1", features = ["macros", "rt-multi-thread", "process", "time", "fs"] }
 toml = "0.8"
 xch = "1.1.0"
+xz2 = "0.1.7"
