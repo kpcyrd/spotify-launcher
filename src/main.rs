@@ -57,7 +57,7 @@ async fn update(
     state: Option<&paths::State>,
     install_path: &Path,
     download_attempts: usize,
-) -> Result<()> {
+) -> Result<(), Error> {
     let update = if let Some(deb_path) = &args.deb {
         let deb = fs::read(deb_path)
             .await
@@ -80,6 +80,7 @@ async fn update(
             }
             _ => {
                 let deb = client.download_pkg(&pkg, download_attempts).await?;
+
                 VersionCheck {
                     deb: Some(deb),
                     version: pkg.version,
@@ -169,7 +170,10 @@ async fn main() -> Result<()> {
     } else {
         let state = paths::load_state_file().await?;
         if should_update(&args, state.as_ref()).await? {
-            update(&args, state.as_ref(), &install_path, download_attempts).await?;
+            if let Err(err) = update(&args, state.as_ref(), &install_path, download_attempts).await
+            {
+                eprintln!("Unable to update spotify: {}", err)
+            }
         } else {
             info!("No update needed");
         }

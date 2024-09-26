@@ -53,7 +53,7 @@ async fn extract_data<R: Read>(
     Ok(())
 }
 
-pub async fn pkg<R: Read>(deb: R, args: &Args, install_path: &Path) -> Result<()> {
+pub async fn pkg<R: Read>(deb: R, args: &Args, install_path: &Path) -> Result<(), Error> {
     let mut ar = ar::Archive::new(deb);
     while let Some(entry) = ar.next_entry() {
         let mut entry = entry?;
@@ -73,5 +73,5 @@ pub async fn pkg<R: Read>(deb: R, args: &Args, install_path: &Path) -> Result<()
             _ => (),
         }
     }
-    bail!("Failed to find data entry in .deb");
+    return Err(anyhow!("No data.tar.gz or data.tar.xz found in .deb"));
 }
