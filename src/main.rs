@@ -20,10 +20,10 @@ struct VersionCheck {
     version: String,
 }
 
-async fn should_update(args: &Args, state: Option<&paths::State>) -> Result<bool> {
-    if args.force_update || args.check_update || args.deb.is_some() {
+async fn should_update(args: &Args, cf: &ConfigFile, state: Option<&paths::State>) -> Result<bool> {
+    if args.force_update || args.check_update || args.deb.is_some() || cf.launcher.check_update {
         Ok(true)
-    } else if args.skip_update {
+    } else if args.skip_update || cf.launcher.skip_update {
         Ok(false)
     } else if let Some(state) = &state {
         let Ok(since_update) = SystemTime::now().duration_since(state.last_update_check) else {
@@ -168,7 +168,7 @@ async fn main() -> Result<()> {
         print_deb_url(&args).await?;
     } else {
         let state = paths::load_state_file().await?;
-        if should_update(&args, state.as_ref()).await? {
+        if should_update(&args, &cf, state.as_ref()).await? {
             update(&args, state.as_ref(), &install_path, download_attempts).await?;
         } else {
             info!("No update needed");

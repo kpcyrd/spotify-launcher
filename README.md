@@ -22,6 +22,13 @@ If no config is found it's going to start with default settings. Your configurat
 #extra_arguments = ["--force-device-scale-factor=2.0"]
 ## On wayland you might need
 #extra_arguments = ["--enable-features=UseOzonePlatform", "--ozone-platform=wayland"]
+[launcher]
+## Skip update (override check_update option)
+#skip_update = true
+## Force update (override check_update = true and skip_update = false)
+#force_update = true
+## Check update
+#check_update = true
 ```
 
 ## License

@@ -7,11 +7,33 @@ use std::path::{Path, PathBuf};
 pub struct ConfigFile {
     #[serde(default)]
     pub spotify: SpotifyConfig,
+    #[serde(default)]
+    pub launcher: LauncherConfig,
 }
 
 impl ConfigFile {
+    pub fn default() -> Self {
+        Self {
+            spotify: SpotifyConfig::default(),
+            launcher: LauncherConfig {
+                check_update: true,
+                ..LauncherConfig::default()
+            }
+        }
+    }
+
     pub fn parse(s: &str) -> Result<ConfigFile> {
-        let c = toml::from_str(s)?;
+        let mut c = toml::from_str::<ConfigFile>(s)?;
+
+        if c.launcher.force_update {
+            c.launcher.skip_update = false;
+            c.launcher.check_update = true;
+        } else if c.launcher.skip_update {
+            c.launcher.check_update = false;
+        } else {
+            c.launcher.check_update = true;
+        }
+
         Ok(c)
     }
 
@@ -56,6 +78,17 @@ pub struct SpotifyConfig {
     pub download_attempts: Option<usize>,
 }
 
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct LauncherConfig {
+    #[serde(default)]
+    pub skip_update: bool,
+    #[serde(default)]
+    pub check_update: bool,
+    #[serde(default)]
+    force_update: bool
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -71,6 +104,84 @@ mod tests {
     fn test_empty_spotify_config() -> Result<()> {
         let cf = ConfigFile::parse("[spotify]")?;
         assert_eq!(cf, ConfigFile::default());
+        Ok(())
+    }
+
+    #[test]
+    fn test_empty_launcher_config() -> Result<()> {
+        let cf = ConfigFile::parse("[launcher]")?;
+        assert_eq!(cf, ConfigFile::default());
+        Ok(())
+    }
+
+    #[test]
+    fn test_launcher_config_skip_update() -> Result<()> {
+        let cf = ConfigFile::parse(r#"[launcher]
+skip_update = true
+        "#);
+        assert_eq!(cf.unwrap_or_default(), ConfigFile {
+            spotify: SpotifyConfig::default(),
+            launcher: LauncherConfig {
+                skip_update: true,
+                check_update: false,
+                force_update: false
+            }
+        });
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_launcher_config_skip_update_check_update() -> Result<()> {
+        let cf = ConfigFile::parse(r#"[launcher]
+skip_update = true
+check_update = true
+        "#);
+        assert_eq!(cf.unwrap_or_default(), ConfigFile {
+            spotify: SpotifyConfig::default(),
+            launcher: LauncherConfig {
+                skip_update: true,
+                check_update: false,
+                force_update: false
+            }
+        });
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_launcher_config_skip_update_force_update() -> Result<()> {
+        let cf = ConfigFile::parse(r#"[launcher]
+skip_update = true
+force_update = true
+        "#);
+        assert_eq!(cf.unwrap_or_default(), ConfigFile {
+            spotify: SpotifyConfig::default(),
+            launcher: LauncherConfig {
+                skip_update: false,
+                check_update: true,
+                force_update: true
+            }
+        });
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_launcher_config_check_update_force_update_skip_update() -> Result<()> {
+        let cf = ConfigFile::parse(r#"[launcher]
+skip_update = true
+force_update = true
+        "#);
+        assert_eq!(cf.unwrap_or_default(), ConfigFile {
+            spotify: SpotifyConfig::default(),
+            launcher: LauncherConfig {
+                skip_update: false,
+                check_update: true,
+                force_update: true
+            }
+        });
+
         Ok(())
     }
 }
