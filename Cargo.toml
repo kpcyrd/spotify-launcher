@@ -20,6 +20,7 @@ libflate = "2"
 log = "0.4.17"
 nix = { version = "0.27", default-features = false, features = ["process"] }
 reqwest = "0.11.10"
+rust-lzma = "0.6.0"
 serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.81"
 sha2 = "0.10.2"
