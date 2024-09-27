@@ -1,17 +1,9 @@
-use crate::args::Args;
 use crate::errors::*;
-use clap::Parser;
 use std::path::Path;
-use std::path::PathBuf;
 use std::process::Stdio;
-use tokio::fs;
 use tokio::process::Command;
 
-pub async fn verify_sig<P: AsRef<Path>>(
-    sig: P,
-    artifact: P,
-    keyring: P,
-) -> Result<(), anyhow::Error> {
+pub async fn verify_sig<P: AsRef<Path>>(sig: P, artifact: P, keyring: P) -> Result<()> {
     let mut cmd = Command::new("sqv")
         .arg("--keyring")
         .arg(keyring.as_ref())
@@ -27,9 +19,11 @@ pub async fn verify_sig<P: AsRef<Path>>(
         .await
         .context("Failed to wait for `sqv` child process")?;
 
-    exit.success()
-        .then(|| Ok(()))
-        .unwrap_or_else(|| Err(anyhow!("Verification of pgp signature didn't succeed")))
+    if exit.success() {
+        Ok(())
+    } else {
+        bail!("Verification of pgp signature didn't succeed");
+    }
 }
 
 #[cfg(test)]

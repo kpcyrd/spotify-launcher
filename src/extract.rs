@@ -7,6 +7,11 @@ use std::io::Read;
 use std::path::Path;
 use tokio::fs;
 
+#[allow(unused_imports)] // bring the Parser trait into scope, so we can use "Args::parse_from"
+use clap::Parser;
+
+const ERROR_NO_DATA_IN_DEB: &str = "No data.tar.gz or data.tar.xz found in .deb";
+
 async fn atomic_swap(src: &Path, target: &Path) -> Result<()> {
     info!(
         "Atomically swapping new directory at {:?} with {:?}...",
@@ -73,5 +78,36 @@ pub async fn pkg<R: Read>(deb: R, args: &Args, install_path: &Path) -> Result<()
             _ => (),
         }
     }
-    return Err(anyhow!("No data.tar.gz or data.tar.xz found in .deb"));
+    return Err(anyhow!(ERROR_NO_DATA_IN_DEB));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    // Make sure that parsing a .deb is ok
+    async fn test_verify_deb_error() -> Result<(), Error> {
+        let deb_path = "data/tests/fake_deb_for_unit_testing.none.deb";
+
+        let args: Args = Args::parse_from(&["app_name"]);
+        let install_path = dirs::runtime_dir()
+            .map(|path| path.join("data/tests/install"))
+            .expect("Could not get the runtime directory");
+
+        tokio::fs::create_dir_all(install_path.clone()).await?;
+
+        let deb = tokio::fs::read(deb_path)
+            .await
+            .with_context(|| anyhow!("Failed to read .deb file from {:?}", deb_path))?;
+
+        let result = crate::extract::pkg(&deb[..], &args, &install_path).await;
+
+        if result.is_err() {
+            assert_eq!(ERROR_NO_DATA_IN_DEB, result.err().unwrap().to_string());
+            return Ok(());
+        }
+
+        return Err(anyhow!("Error"));
+    }
 }

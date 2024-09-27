@@ -1,0 +1,7 @@
+Package: fake-deb-for-unit-testing
+Version: 1.0
+Section: base
+Priority: optional
+Architecture: all
+Maintainer: Fake
+Description: A minimal .deb package for tests
