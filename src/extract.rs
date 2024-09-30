@@ -2,7 +2,6 @@ use crate::args::Args;
 use crate::errors::*;
 use crate::paths;
 use libflate::gzip::Decoder;
-use lzma::LzmaReader;
 use std::io::Read;
 use std::path::Path;
 use tokio::fs;
@@ -66,9 +65,10 @@ pub async fn pkg<R: Read>(deb: R, args: &Args, install_path: &Path) -> Result<()
             }
             b"data.tar.xz" => {
                 debug!("Found data.tar.xz in .deb");
-                let decoder = LzmaReader::new_decompressor(entry)?;
-                let tar = tar::Archive::new(decoder);
-                return extract_data(tar, args, install_path).await;
+                let mut buffer = std::io::BufReader::new(&mut entry);
+                let mut decomp: Vec<u8> = Vec::new();
+                lzma_rs::xz_decompress(&mut buffer, &mut decomp).unwrap();
+                return extract_data(tar::Archive::new(decomp.as_slice()), args, install_path).await;
             }
             _ => (),
         }
