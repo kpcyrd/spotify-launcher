@@ -39,3 +39,12 @@ impl ProgressBar {
         Ok(())
     }
 }
+
+pub async fn display_error(message: &str) -> Result<()> {
+    let mut child = Command::new("zenity")
+        .args(["--error", "--title", "spotify-launcher", "--text", message])
+        .spawn()
+        .context(format!("Failed to spawn zenity for error {}", message))?;
+    child.wait().await?;
+    Ok(())
+}
