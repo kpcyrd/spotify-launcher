@@ -7,6 +7,7 @@ use spotify_launcher::config::ConfigFile;
 use spotify_launcher::errors::*;
 use spotify_launcher::extract;
 use spotify_launcher::paths;
+use spotify_launcher::ui;
 use std::ffi::CString;
 use std::path::Path;
 use std::time::Duration;
@@ -172,7 +173,7 @@ async fn main() -> Result<()> {
         if should_update(&args, state.as_ref()).await? {
             if let Err(err) = update(&args, state.as_ref(), &install_path, download_attempts).await
             {
-                eprintln!("Unable to update spotify: {}", err)
+                ui::display_error(&format!("Unable to update spotify: {}", err)).await?;
             }
         } else {
             info!("No update needed");

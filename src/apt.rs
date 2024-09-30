@@ -3,7 +3,7 @@ use crate::deb::{self, Pkg};
 use crate::errors::*;
 use crate::http;
 use crate::pgp;
-use crate::progress::ProgressBar;
+use crate::ui::ProgressBar;
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::Path;
