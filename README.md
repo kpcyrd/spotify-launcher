@@ -22,6 +22,8 @@ If no config is found it's going to start with default settings. Your configurat
 #extra_arguments = ["--force-device-scale-factor=2.0"]
 ## On wayland you might need
 #extra_arguments = ["--enable-features=UseOzonePlatform", "--ozone-platform=wayland"]
+## Whether an executable should be ran after each upstream Spotify update
+# post_update_exec_hook = "/bin/true"
 ```
 
 ## License
