@@ -9,6 +9,7 @@ use spotify_launcher::extract;
 use spotify_launcher::paths;
 use std::ffi::CString;
 use std::path::Path;
+use std::process::Command;
 use std::time::Duration;
 use std::time::SystemTime;
 use tokio::fs;
@@ -168,8 +169,21 @@ async fn main() -> Result<()> {
         print_deb_url(&args).await?;
     } else {
         let state = paths::load_state_file().await?;
-        if should_update(&args, state.as_ref()).await? {
+        // if should_update(&args, state.as_ref()).await? {
+        if true {
             update(&args, state.as_ref(), &install_path, download_attempts).await?;
+
+            // Launch post update hook executable if configured
+            if let Some((prog, args)) = cf.spotify.post_update_exec_hook.split_at_checked(1) {
+                info!("Post update hook configured, running {:?}, with the following arguments: {:?}", &prog, &args);
+                let output = Command::new(&prog[0]).args(args)
+                    .output().expect("Failed to launch post update exec hook!");
+
+                if !output.status.success() {
+                    warn!("Post update hook exited with a non-zero status with the following output: stdout [{:?}], \
+                        stderr [{:?}]", String::from_utf8(output.stdout).unwrap(), String::from_utf8(output.stderr).unwrap());
+                }
+            }
         } else {
             info!("No update needed");
         }
