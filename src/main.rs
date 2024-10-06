@@ -1,4 +1,5 @@
 use clap::Parser;
+use ctrlc;
 use env_logger::Env;
 use spotify_launcher::apt;
 use spotify_launcher::apt::Client;
@@ -7,11 +8,14 @@ use spotify_launcher::config::ConfigFile;
 use spotify_launcher::errors::*;
 use spotify_launcher::extract;
 use spotify_launcher::paths;
-use std::ffi::CString;
+use std::ffi::{CString, OsString};
 use std::path::Path;
+use std::process::{Child, Command};
 use std::time::Duration;
 use std::time::SystemTime;
 use tokio::fs;
+use nix::unistd::Pid;
+use nix::sys::signal::{self, Signal};
 
 const UPDATE_CHECK_INTERVAL: u64 = 3600 * 24;
 
@@ -108,14 +112,14 @@ fn start(args: &Args, cf: &ConfigFile, install_path: &Path) -> Result<()> {
     let bin = install_path.join("usr/bin/spotify");
     let bin = CString::new(bin.to_string_lossy().as_bytes())?;
 
-    let mut exec_args = vec![CString::new("spotify")?];
+    let mut exec_args: Vec<OsString> = vec![OsString::from("spotify")];
 
     for arg in cf.spotify.extra_arguments.iter().cloned() {
-        exec_args.push(CString::new(arg)?);
+        exec_args.push(OsString::from(&arg));
     }
 
     if let Some(uri) = &args.uri {
-        exec_args.push(CString::new(format!("--uri={}", uri))?);
+        exec_args.push(OsString::from(format!("--uri={}", uri).as_str()));
     }
 
     debug!("Assembled command: {:?}", exec_args);
@@ -130,8 +134,22 @@ fn start(args: &Args, cf: &ConfigFile, install_path: &Path) -> Result<()> {
             };
             std::env::set_var(k, v);
         });
-        nix::unistd::execv(&bin, &exec_args)
-            .with_context(|| anyhow!("Failed to exec {:?}", bin))?;
+
+        let mut spotify_child_proc: Child = Command::new(bin.into_string().unwrap()).args(&exec_args)
+            .spawn().expect("Failed to launch Spotify!");
+
+        let spotify_child_pid: u32 = spotify_child_proc.id();
+        info!("Spotify subprocess launched as PID {}", &spotify_child_pid);
+
+        // Set handler for SIGINT
+        ctrlc::set_handler(move || {
+            info!("SIGINT received, killing child");
+
+            // Send SIGKILL to child process.
+            signal::kill(Pid::from_raw(spotify_child_pid as i32), Signal::SIGKILL).unwrap();
+        }).expect("Error setting Ctrl-C handler");
+
+        spotify_child_proc.wait()?;
     }
 
     Ok(())
