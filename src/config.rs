@@ -18,7 +18,7 @@ impl ConfigFile {
             launcher: LauncherConfig {
                 check_update: true,
                 ..LauncherConfig::default()
-            }
+            },
         }
     }
 
@@ -85,9 +85,8 @@ pub struct LauncherConfig {
     #[serde(default)]
     pub check_update: bool,
     #[serde(default)]
-    force_update: bool
+    force_update: bool,
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -116,71 +115,95 @@ mod tests {
 
     #[test]
     fn test_launcher_config_skip_update() -> Result<()> {
-        let cf = ConfigFile::parse(r#"[launcher]
+        let cf = ConfigFile::parse(
+            r#"[launcher]
 skip_update = true
-        "#);
-        assert_eq!(cf.unwrap_or_default(), ConfigFile {
-            spotify: SpotifyConfig::default(),
-            launcher: LauncherConfig {
-                skip_update: true,
-                check_update: false,
-                force_update: false
+        "#,
+        );
+        assert_eq!(
+            cf.unwrap_or_default(),
+            ConfigFile {
+                spotify: SpotifyConfig::default(),
+                launcher: LauncherConfig {
+                    skip_update: true,
+                    check_update: false,
+                    force_update: false,
+                    keyring: None,
+                }
             }
-        });
+        );
 
         Ok(())
     }
 
     #[test]
     fn test_launcher_config_skip_update_check_update() -> Result<()> {
-        let cf = ConfigFile::parse(r#"[launcher]
+        let cf = ConfigFile::parse(
+            r#"[launcher]
 skip_update = true
 check_update = true
-        "#);
-        assert_eq!(cf.unwrap_or_default(), ConfigFile {
-            spotify: SpotifyConfig::default(),
-            launcher: LauncherConfig {
-                skip_update: true,
-                check_update: false,
-                force_update: false
+        "#,
+        );
+        assert_eq!(
+            cf.unwrap_or_default(),
+            ConfigFile {
+                spotify: SpotifyConfig::default(),
+                launcher: LauncherConfig {
+                    skip_update: true,
+                    check_update: false,
+                    force_update: false,
+                    keyring: None,
+                }
             }
-        });
+        );
 
         Ok(())
     }
 
     #[test]
     fn test_launcher_config_skip_update_force_update() -> Result<()> {
-        let cf = ConfigFile::parse(r#"[launcher]
+        let cf = ConfigFile::parse(
+            r#"[launcher]
 skip_update = true
 force_update = true
-        "#);
-        assert_eq!(cf.unwrap_or_default(), ConfigFile {
-            spotify: SpotifyConfig::default(),
-            launcher: LauncherConfig {
-                skip_update: false,
-                check_update: true,
-                force_update: true
+        "#,
+        );
+        assert_eq!(
+            cf.unwrap_or_default(),
+            ConfigFile {
+                spotify: SpotifyConfig::default(),
+                launcher: LauncherConfig {
+                    skip_update: false,
+                    check_update: true,
+                    force_update: true,
+                    keyring: None,
+                }
             }
-        });
+        );
 
         Ok(())
     }
 
     #[test]
     fn test_launcher_config_check_update_force_update_skip_update() -> Result<()> {
-        let cf = ConfigFile::parse(r#"[launcher]
+        let cf = ConfigFile::parse(
+            r#"[launcher]
 skip_update = true
 force_update = true
-        "#);
-        assert_eq!(cf.unwrap_or_default(), ConfigFile {
-            spotify: SpotifyConfig::default(),
-            launcher: LauncherConfig {
-                skip_update: false,
-                check_update: true,
-                force_update: true
+        "#,
+        );
+        assert_eq!(
+            cf.unwrap_or_default(),
+            ConfigFile {
+                spotify: SpotifyConfig::default(),
+                launcher: LauncherConfig {
+                    skip_update: false,
+                    check_update: true,
+                    force_update: true,
+                    keyring: None,
+                }
             }
-        });
+        );
 
         Ok(())
     }
