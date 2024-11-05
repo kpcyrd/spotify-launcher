@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ConfigFile {
     #[serde(default)]
     pub spotify: SpotifyConfig,
@@ -12,26 +12,14 @@ pub struct ConfigFile {
 }
 
 impl ConfigFile {
-    pub fn default() -> Self {
-        Self {
-            spotify: SpotifyConfig::default(),
-            launcher: LauncherConfig {
-                check_update: true,
-                ..LauncherConfig::default()
-            },
-        }
-    }
-
     pub fn parse(s: &str) -> Result<ConfigFile> {
         let mut c = toml::from_str::<ConfigFile>(s)?;
 
         if c.launcher.force_update {
             c.launcher.skip_update = false;
             c.launcher.check_update = true;
-        } else if c.launcher.skip_update {
-            c.launcher.check_update = false;
         } else {
-            c.launcher.check_update = true;
+            c.launcher.check_update = !c.launcher.skip_update;
         }
 
         if let Some(keyring) = &c.launcher.keyring {
@@ -71,6 +59,18 @@ impl ConfigFile {
         } else {
             info!("No configuration file found, using default config");
             Ok(Self::default())
+        }
+    }
+}
+
+impl Default for ConfigFile {
+    fn default() -> Self {
+        Self {
+            spotify: SpotifyConfig::default(),
+            launcher: LauncherConfig {
+                check_update: true,
+                ..LauncherConfig::default()
+            },
         }
     }
 }
