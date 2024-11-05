@@ -29,6 +29,8 @@ If no config is found it's going to start with default settings. Your configurat
 #force_update = true
 ## Check update
 #check_update = true
+## Keyring path
+#keyring = ""
 ```
 
 ## License
