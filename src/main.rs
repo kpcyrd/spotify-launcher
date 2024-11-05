@@ -45,9 +45,9 @@ async fn should_update(args: &Args, cf: &ConfigFile, state: Option<&paths::State
     }
 }
 
-async fn print_deb_url(args: &Args) -> Result<()> {
+async fn print_deb_url(args: &Args, keyring_path: &Path) -> Result<()> {
     let client = Client::new(args.timeout)?;
-    let pkg = client.fetch_pkg_release(&args.keyring).await?;
+    let pkg = client.fetch_pkg_release(keyring_path).await?;
     println!("{}", pkg.download_url());
     Ok(())
 }
@@ -57,6 +57,7 @@ async fn update(
     state: Option<&paths::State>,
     install_path: &Path,
     download_attempts: usize,
+    keyring_path: &Path,
 ) -> Result<()> {
     let update = if let Some(deb_path) = &args.deb {
         let deb = fs::read(deb_path)
@@ -68,7 +69,7 @@ async fn update(
         }
     } else {
         let client = Client::new(args.timeout)?;
-        let pkg = client.fetch_pkg_release(&args.keyring).await?;
+        let pkg = client.fetch_pkg_release(keyring_path).await?;
 
         match state {
             Some(state) if state.version == pkg.version && !args.force_update => {
@@ -164,12 +165,25 @@ async fn main() -> Result<()> {
             .unwrap_or(apt::DEFAULT_DOWNLOAD_ATTEMPTS)
     });
 
+    let keyring_path = match &cf.launcher.keyring {
+        Some(path) => path.clone(),
+        None => args.keyring.clone(),
+    };
+    debug!("Using keyring path: {:?}", keyring_path);
+
     if args.print_deb_url {
-        print_deb_url(&args).await?;
+        print_deb_url(&args, &keyring_path).await?;
     } else {
         let state = paths::load_state_file().await?;
         if should_update(&args, &cf, state.as_ref()).await? {
-            update(&args, state.as_ref(), &install_path, download_attempts).await?;
+            update(
+                &args,
+                state.as_ref(),
+                &install_path,
+                download_attempts,
+                &keyring_path,
+            )
+            .await?;
         } else {
             info!("No update needed");
         }

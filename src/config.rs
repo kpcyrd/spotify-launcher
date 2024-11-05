@@ -34,6 +34,12 @@ impl ConfigFile {
             c.launcher.check_update = true;
         }
 
+        if let Some(keyring) = &c.launcher.keyring {
+            if !keyring.exists() {
+                c.launcher.keyring = None;
+            }
+        }
+
         Ok(c)
     }
 
@@ -84,6 +90,8 @@ pub struct LauncherConfig {
     pub skip_update: bool,
     #[serde(default)]
     pub check_update: bool,
+    #[serde(default)]
+    pub keyring: Option<PathBuf>,
     #[serde(default)]
     force_update: bool,
 }
@@ -200,6 +208,52 @@ force_update = true
                     skip_update: false,
                     check_update: true,
                     force_update: true,
+                    keyring: None,
+                }
+            }
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_launcher_config_keyring() -> Result<()> {
+        let cf = ConfigFile::parse(
+            r#"[launcher]
+keyring = "/dev/null"
+        "#,
+        );
+        assert_eq!(
+            cf.unwrap_or_default(),
+            ConfigFile {
+                spotify: SpotifyConfig::default(),
+                launcher: LauncherConfig {
+                    skip_update: false,
+                    check_update: true,
+                    force_update: false,
+                    keyring: Some(PathBuf::from("/dev/null")),
+                }
+            }
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_launcher_config_keyring_empty_string() -> Result<()> {
+        let cf = ConfigFile::parse(
+            r#"[launcher]
+keyring = ""
+        "#,
+        );
+        assert_eq!(
+            cf.unwrap_or_default(),
+            ConfigFile {
+                spotify: SpotifyConfig::default(),
+                launcher: LauncherConfig {
+                    skip_update: false,
+                    check_update: true,
+                    force_update: false,
                     keyring: None,
                 }
             }
