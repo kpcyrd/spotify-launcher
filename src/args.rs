@@ -3,8 +3,8 @@ use std::path::PathBuf;
 #[derive(Debug, clap::Parser)]
 pub struct Args {
     /// Overwrite the default keyring
-    #[arg(long, default_value = "/usr/share/spotify-launcher/keyring.pgp")]
-    pub keyring: PathBuf,
+    #[arg(long)]
+    pub keyring: Option<PathBuf>,
     /// Use a local .deb file instead of downloading one
     #[arg(long)]
     pub deb: Option<PathBuf>,

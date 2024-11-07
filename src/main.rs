@@ -14,6 +14,7 @@ use std::time::SystemTime;
 use tokio::fs;
 
 const UPDATE_CHECK_INTERVAL: u64 = 3600 * 24;
+const KEYRING_DEFAULT_PATH: &str = "/usr/share/spotify-launcher/keyring.pgp";
 
 struct VersionCheck {
     deb: Option<Vec<u8>>,
@@ -165,10 +166,12 @@ async fn main() -> Result<()> {
             .unwrap_or(apt::DEFAULT_DOWNLOAD_ATTEMPTS)
     });
 
-    let keyring_path = match &cf.launcher.keyring {
-        Some(path) => path.clone(),
-        None => args.keyring.clone(),
-    };
+    let keyring_path = args.keyring.clone().unwrap_or_else(|| {
+        cf.launcher
+            .keyring
+            .clone()
+            .unwrap_or(Path::new(KEYRING_DEFAULT_PATH).to_path_buf())
+    });
     debug!("Using keyring path: {:?}", keyring_path);
 
     if args.print_deb_url {
