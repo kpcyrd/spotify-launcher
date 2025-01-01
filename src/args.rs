@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
+#[command(version)]
 pub struct Args {
     /// Overwrite the default keyring
     #[arg(long, default_value = "/usr/share/spotify-launcher/keyring.pgp")]
