@@ -172,6 +172,7 @@ async fn main() -> Result<()> {
         if should_update(&args, state.as_ref()).await? {
             if let Err(err) = update(&args, state.as_ref(), &install_path, download_attempts).await
             {
+                error!("Update failed: {err:#}");
                 ui::error(&err).await?;
             }
         } else {
