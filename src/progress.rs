@@ -1,32 +1,27 @@
 use crate::errors::*;
-use std::process::Stdio;
+use crate::ui::Zenity;
 use tokio::io::AsyncWriteExt;
-use tokio::process::{Child, Command};
 
 pub struct ProgressBar {
-    child: Child,
+    ui: Zenity,
 }
 
 impl ProgressBar {
     pub fn spawn() -> Result<ProgressBar> {
-        let child = Command::new("zenity")
-            .args([
-                "--progress",
-                "--title",
-                "Downloading spotify",
-                "--text=Downloading...",
-                "--no-cancel",
-                "--ok-label",
-                "😺",
-            ])
-            .stdin(Stdio::piped())
-            .spawn()
-            .context("Failed to spawn zenity")?;
-        Ok(ProgressBar { child })
+        let ui = Zenity::spawn(&[
+            "--progress",
+            "--title",
+            "Downloading spotify",
+            "--text=Downloading...",
+            "--no-cancel",
+            "--ok-label",
+            "😺",
+        ])?;
+        Ok(ProgressBar { ui })
     }
 
     pub async fn update(&mut self, progress: u64) -> Result<()> {
-        if let Some(stdin) = &mut self.child.stdin {
+        if let Some(stdin) = &mut self.ui.child.stdin {
             let buf = format!("{}\n", progress);
             stdin.write_all(buf.as_bytes()).await?;
             stdin.flush().await?;
@@ -35,7 +30,7 @@ impl ProgressBar {
     }
 
     pub async fn close(&mut self) -> Result<()> {
-        self.child.kill().await?;
+        self.ui.child.kill().await?;
         Ok(())
     }
 }
