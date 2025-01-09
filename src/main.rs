@@ -180,7 +180,14 @@ async fn main() -> Result<()> {
     } else {
         let state = paths::load_state_file().await?;
         if should_update(&args, &cf, state.as_ref()).await? {
-            if let Err(err) = update(&args, state.as_ref(), &install_path, download_attempts, &keyring_path).await
+            if let Err(err) = update(
+                &args,
+                state.as_ref(),
+                &install_path,
+                download_attempts,
+                &keyring_path,
+            )
+            .await
             {
                 error!("Update failed: {err:#}");
                 ui::error(&err).await?;
