@@ -13,13 +13,12 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
 
     - name: Set up cargo cache
-      uses: actions/cache@v3
-      continue-on-error: false
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/bin/
@@ -31,10 +30,22 @@ jobs:
         restore-keys: ${{ runner.os }}-cargo-release-
 
     - name: Install dependencies
-      run: sudo apt-get install sqv
+      run: sudo apt-get install liblzma-dev sqv
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
     - name: Run clippy
       run: cargo clippy --verbose
+
+  deny:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run cargo deny
+      run: |
+        docker run --rm -v "$PWD:/src" -w /src alpine:edge sh -c '
+        set -e
+        apk add cargo cargo-deny
+        exec cargo deny check
+        '
