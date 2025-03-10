@@ -188,8 +188,10 @@ SHA256:
 "#;
         let parsed = parse_release_file(data)?;
         assert_eq!(parsed, {
-            let mut release = Release::default();
-            release.architectures = vec!["amd64".to_string(), "i386".to_string()];
+            let mut release = Release {
+                architectures: vec!["amd64".to_string(), "i386".to_string()],
+                ..Release::default()
+            };
             let m = &mut release.sha256_sums;
             m.insert(
                 "non-free/binary-amd64/Packages".into(),
