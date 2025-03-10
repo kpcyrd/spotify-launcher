@@ -32,11 +32,11 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get install liblzma-dev sqv
     - name: Build
-      run: cargo build --verbose
+      run: cargo build
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test
     - name: Run clippy
-      run: cargo clippy --verbose
+      run: cargo clippy
 
   deny:
     runs-on: ubuntu-24.04
@@ -49,3 +49,10 @@ jobs:
         apk add cargo cargo-deny
         exec cargo deny check
         '
+
+  fmt:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run cargo fmt
+      run: cargo fmt --all -- --check
