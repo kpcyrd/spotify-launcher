@@ -30,7 +30,7 @@ jobs:
         restore-keys: ${{ runner.os }}-cargo-release-
 
     - name: Install dependencies
-      run: sudo apt-get install liblzma-dev sqv
+      run: sudo apt-get update && sudo apt-get install liblzma-dev sqv
     - name: Build
       run: cargo build
     - name: Run tests
