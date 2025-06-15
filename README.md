@@ -26,4 +26,4 @@ If no config is found it's going to start with default settings. Your configurat
 
 ## License
 
-GPLv3+
+`Apache-2.0 OR MIT`
