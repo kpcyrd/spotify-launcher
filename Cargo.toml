@@ -1,6 +1,6 @@
 [package]
 name = "spotify-launcher"
-version = "0.6.3"
+version = "0.6.4"
 edition = "2021"
 description = "Client for spotify's apt repository in Rust for Arch Linux"
 authors = ["kpcyrd <git@rxv.cc>"]
