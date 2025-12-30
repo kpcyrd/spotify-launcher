@@ -19,7 +19,7 @@ env_logger = "0.11"
 libflate = "2"
 log = "0.4.17"
 nix = { version = "0.30", default-features = false, features = ["process"] }
-reqwest = { version = "0.13", default-features = false, features = ["charset", "http2", "rustls"] }
+reqwest = "0.13"
 rust-lzma = "0.6.0"
 serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.81"
