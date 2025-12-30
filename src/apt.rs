@@ -117,7 +117,7 @@ impl Client {
         Ok(())
     }
 
-    pub async fn download_pkg(&self, pkg: &Pkg, download_attempts: usize) -> Result<Vec<u8>> {
+    pub async fn download_pkg(&self, pkg: &Pkg, max_download_attempts: usize) -> Result<Vec<u8>> {
         let filename = pkg
             .filename
             .rsplit_once('/')
@@ -140,12 +140,12 @@ impl Client {
         loop {
             // increast the counter until usize::MAX, but do not overflow
             i = i.saturating_add(1);
-            if download_attempts > 0 && i > download_attempts {
+            if max_download_attempts > 0 && i > max_download_attempts {
                 // number of download attempts exceeded
                 break;
             }
 
-            if i > 0 {
+            if i > 1 {
                 info!("Retrying download...");
             }
 
