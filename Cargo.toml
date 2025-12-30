@@ -18,7 +18,7 @@ dirs = "6"
 env_logger = "0.11"
 libflate = "2"
 log = "0.4.17"
-nix = { version = "0.29", default-features = false, features = ["process"] }
+nix = { version = "0.30", default-features = false, features = ["process"] }
 reqwest = { version = "0.12", default-features = false, features = ["charset", "http2", "rustls-tls-native-roots"] }
 rust-lzma = "0.6.0"
 serde = { version = "1.0.137", features = ["derive"] }
@@ -27,5 +27,5 @@ sha2 = "0.10.2"
 tar = "0.4.38"
 tempfile = "3.3.0"
 tokio = { version = "1.18.1", features = ["macros", "rt-multi-thread", "process", "time", "fs"] }
-toml = "0.8"
+toml = "0.9"
 xch = "1.1.0"
