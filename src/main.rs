@@ -15,16 +15,17 @@ use std::time::SystemTime;
 use tokio::fs;
 
 const UPDATE_CHECK_INTERVAL: u64 = 3600 * 24;
+const KEYRING_DEFAULT_PATH: &str = "/usr/share/spotify-launcher/keyring.pgp";
 
 struct VersionCheck {
     deb: Option<Vec<u8>>,
     version: String,
 }
 
-async fn should_update(args: &Args, state: Option<&paths::State>) -> Result<bool> {
-    if args.force_update || args.check_update || args.deb.is_some() {
+async fn should_update(args: &Args, cf: &ConfigFile, state: Option<&paths::State>) -> Result<bool> {
+    if args.force_update || args.check_update || args.deb.is_some() || cf.launcher.check_update {
         Ok(true)
-    } else if args.skip_update {
+    } else if args.skip_update || cf.launcher.skip_update {
         Ok(false)
     } else if let Some(state) = &state {
         let Ok(since_update) = SystemTime::now().duration_since(state.last_update_check) else {
@@ -46,9 +47,9 @@ async fn should_update(args: &Args, state: Option<&paths::State>) -> Result<bool
     }
 }
 
-async fn print_deb_url(args: &Args) -> Result<()> {
+async fn print_deb_url(args: &Args, keyring_path: &Path) -> Result<()> {
     let client = Client::new(args.timeout)?;
-    let pkg = client.fetch_pkg_release(&args.keyring).await?;
+    let pkg = client.fetch_pkg_release(keyring_path).await?;
     println!("{}", pkg.download_url());
     Ok(())
 }
@@ -58,6 +59,7 @@ async fn update(
     state: Option<&paths::State>,
     install_path: &Path,
     download_attempts: usize,
+    keyring_path: &Path,
 ) -> Result<()> {
     let update = if let Some(deb_path) = &args.deb {
         let deb = fs::read(deb_path)
@@ -69,7 +71,7 @@ async fn update(
         }
     } else {
         let client = Client::new(args.timeout)?;
-        let pkg = client.fetch_pkg_release(&args.keyring).await?;
+        let pkg = client.fetch_pkg_release(keyring_path).await?;
 
         match state {
             Some(state) if state.version == pkg.version && !args.force_update => {
@@ -165,12 +167,27 @@ async fn main() -> Result<()> {
             .unwrap_or(apt::DEFAULT_DOWNLOAD_ATTEMPTS)
     });
 
+    let keyring_path = args.keyring.clone().unwrap_or_else(|| {
+        cf.launcher
+            .keyring
+            .clone()
+            .unwrap_or(Path::new(KEYRING_DEFAULT_PATH).to_path_buf())
+    });
+    debug!("Using keyring path: {:?}", keyring_path);
+
     if args.print_deb_url {
-        print_deb_url(&args).await?;
+        print_deb_url(&args, &keyring_path).await?;
     } else {
         let state = paths::load_state_file().await?;
-        if should_update(&args, state.as_ref()).await? {
-            if let Err(err) = update(&args, state.as_ref(), &install_path, download_attempts).await
+        if should_update(&args, &cf, state.as_ref()).await? {
+            if let Err(err) = update(
+                &args,
+                state.as_ref(),
+                &install_path,
+                download_attempts,
+                &keyring_path,
+            )
+            .await
             {
                 error!("Update failed: {err:#}");
                 ui::error(&err).await?;
