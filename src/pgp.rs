@@ -35,7 +35,7 @@ mod tests {
         verify_sig(
             "data/Release.gpg",
             "data/Release",
-            "data/pubkey_C85668DF69375001.gpg",
+            "data/pubkey_5384CE82BA52C83A.gpg",
         )
         .await
     }
