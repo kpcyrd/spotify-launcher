@@ -1,6 +1,6 @@
 [package]
 name = "spotify-launcher"
-version = "0.6.4"
+version = "0.6.5"
 edition = "2021"
 description = "Client for spotify's apt repository in Rust for Arch Linux"
 authors = ["kpcyrd <git@rxv.cc>"]
@@ -18,7 +18,7 @@ dirs = "6"
 env_logger = "0.11"
 libflate = "2"
 log = "0.4.17"
-nix = { version = "0.30", default-features = false, features = ["process"] }
+nix = { version = "0.31", default-features = false, features = ["process"] }
 reqwest = "0.13"
 rust-lzma = "0.6.0"
 serde = { version = "1.0.137", features = ["derive"] }
