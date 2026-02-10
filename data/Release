@@ -3,13 +3,13 @@ Label: Spotify Public Repository
 Suite: testing
 Codename: testing
 Version: 0.4
-Date: Fri, 27 Dec 2024 13:36:50 UTC
+Date: Mon, 09 Feb 2026 11:00:04 UTC
 Architectures: amd64 i386
 Components: non-free
 Description: Spotify's repository for beta releases of the desktop client
 MD5Sum:
- e03c969bdec2293910a1c191f09c6d88 1132 non-free/binary-amd64/Packages
- a5d3f209aa538627975f11553df6a61d 640 non-free/binary-amd64/Packages.gz
+ 7f0cd096f7a0251197a22decb8a32739 1124 non-free/binary-amd64/Packages
+ a11b101834aafd54b00c9e0ff458197f 634 non-free/binary-amd64/Packages.gz
  896ad45b10babce26185deb30607ef41 197 non-free/binary-amd64/Release
  a8c05022d265f28df197b805b288d5ba 1067 non-free/binary-i386/Packages
  3e4e68c25b50354d4eb2b0f5d6a94186 627 non-free/binary-i386/Packages.gz
@@ -18,8 +18,8 @@ MD5Sum:
  7029066c27ac6f5ef18d660d5741979a 20 non-free/source/Sources.gz
  ea17201e3c955b95e948af6c95a5f698 198 non-free/source/Release
 SHA1:
- 9638e4a3932e8af82b4b47128989d69b7959f26c 1132 non-free/binary-amd64/Packages
- 885822df368a02f18b4324b381c463a73a14340d 640 non-free/binary-amd64/Packages.gz
+ 516a741d7d8ab2be7824f93635c3044f8f44162d 1124 non-free/binary-amd64/Packages
+ cbddf2bce944ee9459ce63a0c95a12e5a2362027 634 non-free/binary-amd64/Packages.gz
  4faadfa7ad9ad0ec07f8f17f31963878f5fe02df 197 non-free/binary-amd64/Release
  d3c079c39d98bb711f2da7643fc8f6938976e3d1 1067 non-free/binary-i386/Packages
  0287c8d02c70ee39a6d36c43b8576b17650c49ae 627 non-free/binary-i386/Packages.gz
@@ -28,8 +28,8 @@ SHA1:
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 non-free/source/Sources.gz
  3c5cc8f592faad9f57a4045cd6193615786ae98d 198 non-free/source/Release
 SHA256:
- 49548efb5401a5c834787a88151d0963bbfa9b76e729d3604a5cb26130158d8c 1132 non-free/binary-amd64/Packages
- 1a80e6c9f69e309200bd47e3a67036640b91d7051248b8b4738db0548dddb287 640 non-free/binary-amd64/Packages.gz
+ b8cb36f60aa80014fab52ca511c967241c78c1581b05a35c887a4927d182c17c 1124 non-free/binary-amd64/Packages
+ 8a291638cc188b499c8a00f7fe5c7420560e252ab820e3102ad90e2a7411429d 634 non-free/binary-amd64/Packages.gz
  35876d5aa96d00b39fe3a26660a7665b4ced399a650dc3344b20dee7ad3cc766 197 non-free/binary-amd64/Release
  d0c9429da6207b0789c5e816c3d500c89a2a9ef49c6a4eec5239151d9338213d 1067 non-free/binary-i386/Packages
  03e7a8877e82bf8e6fde54c67819a87797e119db383c9ce065d8cd94f103e561 627 non-free/binary-i386/Packages.gz

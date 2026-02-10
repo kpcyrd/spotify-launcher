@@ -20,7 +20,7 @@ package() {
   cd ..
   install -Dm 755 -t "${pkgdir}/usr/bin" \
     target/release/spotify-launcher
-  install -Dm 644 data/pubkey_6224F9941A8AA6D1.gpg \
+  install -Dm 644 data/pubkey_5384CE82BA52C83A.gpg \
     "${pkgdir}/usr/share/spotify-launcher/keyring.pgp"
 
   install -Dm644 contrib/spotify-launcher.desktop -t "${pkgdir}/usr/share/applications"
