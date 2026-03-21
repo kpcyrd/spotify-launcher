@@ -23,8 +23,12 @@ impl ProgressBar {
     pub async fn update(&mut self, progress: u64) -> Result<()> {
         if let Some(stdin) = &mut self.ui.child.stdin {
             let buf = format!("{}\n", progress);
-            stdin.write_all(buf.as_bytes()).await?;
-            stdin.flush().await?;
+            if stdin.write_all(buf.as_bytes()).await.is_err()
+                || stdin.flush().await.is_err()
+            {
+                log::warn!("Progress indicator exited, continuing download without progress");
+                self.ui.child.stdin.take();
+            }
         }
         Ok(())
     }
