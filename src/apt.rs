@@ -9,7 +9,7 @@ use std::fs;
 use std::path::Path;
 
 pub const DEFAULT_DOWNLOAD_ATTEMPTS: usize = 5;
-pub const SPOTIFY_REPOSITORY: &str = "http://repository.spotify.com";
+pub const SPOTIFY_REPOSITORY: &str = "https://repository.spotify.com";
 pub const SPOTIFY_REPOSITORY_RELEASE: &str = "testing";
 
 pub struct Client {
