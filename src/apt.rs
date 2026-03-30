@@ -165,7 +165,7 @@ impl Client {
 
                 // verify checksum
                 info!("Verifying with sha256sum hash...");
-                let downloaded_sha256sum = format!("{:x}", hasher.finalize());
+                let downloaded_sha256sum = crypto::sha256sum_hex(hasher);
                 if pkg.sha256sum != downloaded_sha256sum {
                     bail!(
                         "Downloaded bytes don't match signed sha256sum (signed: {:?}, downloaded: {:?})",
