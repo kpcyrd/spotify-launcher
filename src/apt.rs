@@ -9,6 +9,8 @@ use std::fs;
 use std::path::Path;
 
 pub const DEFAULT_DOWNLOAD_ATTEMPTS: usize = 5;
+pub const SPOTIFY_REPOSITORY: &str = "http://repository.spotify.com";
+pub const SPOTIFY_REPOSITORY_RELEASE: &str = "testing";
 
 pub struct Client {
     client: http::Client,
@@ -24,13 +26,17 @@ impl Client {
         info!("Downloading release file...");
         let release = self
             .client
-            .fetch("http://repository.spotify.com/dists/testing/Release")
+            .fetch(&format!(
+                "{SPOTIFY_REPOSITORY}/dists/{SPOTIFY_REPOSITORY_RELEASE}/Release"
+            ))
             .await?;
 
         info!("Downloading signature...");
         let sig = self
             .client
-            .fetch("http://repository.spotify.com/dists/testing/Release.gpg")
+            .fetch(&format!(
+                "{SPOTIFY_REPOSITORY}/dists/{SPOTIFY_REPOSITORY_RELEASE}/Release.gpg"
+            ))
             .await?;
 
         info!("Verifying pgp signature...");
@@ -68,7 +74,7 @@ impl Client {
         let pkg_index = self
             .client
             .fetch(&format!(
-                "http://repository.spotify.com/dists/testing/{packages_path}"
+                "{SPOTIFY_REPOSITORY}/dists/{SPOTIFY_REPOSITORY_RELEASE}/{packages_path}"
             ))
             .await?;
 

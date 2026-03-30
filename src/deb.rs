@@ -1,3 +1,4 @@
+use crate::apt::SPOTIFY_REPOSITORY;
 use crate::errors::*;
 use std::collections::HashMap;
 use std::env;
@@ -82,7 +83,7 @@ pub struct Pkg {
 
 impl Pkg {
     pub fn download_url(&self) -> String {
-        format!("http://repository.spotify.com/{}", self.filename)
+        format!("{SPOTIFY_REPOSITORY}/{}", self.filename)
     }
 }
 
