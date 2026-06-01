@@ -36,7 +36,7 @@ jobs:
     - name: Run tests
       run: cargo test
     - name: Run clippy
-      run: cargo clippy
+      run: cargo clippy --all-targets
 
   deny:
     runs-on: ubuntu-24.04

@@ -188,48 +188,52 @@ SHA256:
  963be5cb6b84350b820fd4bb4ce5059bb4cbb16dcfa7614c630ded76a09155a5 198 non-free/source/Release
 "#;
         let parsed = parse_release_file(data)?;
-        assert_eq!(parsed, {
-            let mut release = Release::default();
-            release.architectures = vec!["amd64".to_string(), "i386".to_string()];
-            let m = &mut release.sha256_sums;
-            m.insert(
-                "non-free/binary-amd64/Packages".into(),
-                "7eb86d0a8bbbfb356b2c641f039214ad30f7f5d7faabdf546d5f83d4f0f574cd".into(),
-            );
-            m.insert(
-                "non-free/binary-amd64/Packages.gz".into(),
-                "8c55f74c379873d3b4bb63b7e05eff20705e9f08348b93b9e20d3baa8d27d383".into(),
-            );
-            m.insert(
-                "non-free/binary-amd64/Release".into(),
-                "35876d5aa96d00b39fe3a26660a7665b4ced399a650dc3344b20dee7ad3cc766".into(),
-            );
-            m.insert(
-                "non-free/binary-i386/Packages".into(),
-                "497184ddb1dc525de81a1bd98ac97175b176d15ead076680d3e8d27b0b5329c8".into(),
-            );
-            m.insert(
-                "non-free/binary-i386/Packages.gz".into(),
-                "2654df365b0dd96a6307e6e56780815d8695ed89da547c1a6beb509035a8ddd0".into(),
-            );
-            m.insert(
-                "non-free/binary-i386/Release".into(),
-                "1b0d97da546cdcd460e99eaadaac929048b217a9e043a2a919a648910e8f1be4".into(),
-            );
-            m.insert(
-                "non-free/source/Sources".into(),
-                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".into(),
-            );
-            m.insert(
-                "non-free/source/Sources.gz".into(),
-                "59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2".into(),
-            );
-            m.insert(
-                "non-free/source/Release".into(),
-                "963be5cb6b84350b820fd4bb4ce5059bb4cbb16dcfa7614c630ded76a09155a5".into(),
-            );
-            release
-        });
+        assert_eq!(
+            parsed,
+            Release {
+                architectures: vec!["amd64".to_string(), "i386".to_string()],
+                sha256_sums: [
+                    (
+                        "non-free/binary-amd64/Packages".into(),
+                        "7eb86d0a8bbbfb356b2c641f039214ad30f7f5d7faabdf546d5f83d4f0f574cd".into(),
+                    ),
+                    (
+                        "non-free/binary-amd64/Packages.gz".into(),
+                        "8c55f74c379873d3b4bb63b7e05eff20705e9f08348b93b9e20d3baa8d27d383".into(),
+                    ),
+                    (
+                        "non-free/binary-amd64/Release".into(),
+                        "35876d5aa96d00b39fe3a26660a7665b4ced399a650dc3344b20dee7ad3cc766".into(),
+                    ),
+                    (
+                        "non-free/binary-i386/Packages".into(),
+                        "497184ddb1dc525de81a1bd98ac97175b176d15ead076680d3e8d27b0b5329c8".into(),
+                    ),
+                    (
+                        "non-free/binary-i386/Packages.gz".into(),
+                        "2654df365b0dd96a6307e6e56780815d8695ed89da547c1a6beb509035a8ddd0".into(),
+                    ),
+                    (
+                        "non-free/binary-i386/Release".into(),
+                        "1b0d97da546cdcd460e99eaadaac929048b217a9e043a2a919a648910e8f1be4".into(),
+                    ),
+                    (
+                        "non-free/source/Sources".into(),
+                        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".into(),
+                    ),
+                    (
+                        "non-free/source/Sources.gz".into(),
+                        "59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2".into(),
+                    ),
+                    (
+                        "non-free/source/Release".into(),
+                        "963be5cb6b84350b820fd4bb4ce5059bb4cbb16dcfa7614c630ded76a09155a5".into(),
+                    ),
+                ]
+                .into_iter()
+                .collect(),
+            }
+        );
         Ok(())
     }
 
