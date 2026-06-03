@@ -22,6 +22,8 @@ If no config is found it's going to start with default settings. Your configurat
 #extra_arguments = ["--force-device-scale-factor=2.0"]
 ## On wayland you might need
 #extra_arguments = ["--enable-features=UseOzonePlatform", "--ozone-platform=wayland"]
+## After an update you might want to execute some scripts. You can pass them here
+# update_hooks = ["~/some_script.sh"]
 ```
 
 ## License
