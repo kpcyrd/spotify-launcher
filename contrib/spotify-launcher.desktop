@@ -8,4 +8,4 @@ Exec=spotify-launcher %U
 Terminal=false
 MimeType=x-scheme-handler/spotify;
 Categories=Audio;Music;Player;AudioVideo;
-StartupWMClass=spotify
+StartupWMClass=Spotify
