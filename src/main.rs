@@ -13,6 +13,7 @@ use std::path::Path;
 use std::time::Duration;
 use std::time::SystemTime;
 use tokio::fs;
+use std::process::Command;
 
 const UPDATE_CHECK_INTERVAL: u64 = 3600 * 24;
 
@@ -105,6 +106,31 @@ async fn update(
     Ok(())
 }
 
+fn expand_tilde(path: &str) -> String {
+    if let Some(stripped) = path.strip_prefix("~/") {
+        if let Some(mut home) = dirs::home_dir() {
+            home.push(stripped);
+            return home.to_string_lossy().into_owned();
+        }
+    }
+    path.to_string()
+}
+
+fn run_update_hooks(hooks: &[String]) -> Result<()> {
+    for hook in hooks {
+        info!("Running update hook: {}", hook);
+        let expanded = expand_tilde(hook);
+        let path = Path::new(&expanded);
+
+        if !path.exists() || !path.is_file() {
+            return Err(anyhow::anyhow!("Invalid hook path: {}", expanded));
+        }
+
+        let _ = Command::new(&expanded).spawn();
+    }
+    Ok(())
+}
+
 fn start(args: &Args, cf: &ConfigFile, install_path: &Path) -> Result<()> {
     let bin = install_path.join("usr/bin/spotify");
     let bin = CString::new(bin.to_string_lossy().as_bytes())?;
@@ -173,6 +199,11 @@ async fn main() -> Result<()> {
             if let Err(err) = update(&args, state.as_ref(), &install_path, download_attempts).await
             {
                 error!("Update failed: {err:#}");
+                ui::error(&err).await?;
+            }
+            if let Err(err) = run_update_hooks(&cf.spotify.update_hooks)
+            {
+                error!("Hook execution failed: {err:#}");
                 ui::error(&err).await?;
             }
         } else {
